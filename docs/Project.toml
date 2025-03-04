@@ -1,3 +1,6 @@
 [deps]
-Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Arianna = "07692032-97b4-4f8d-80d7-e18df88d31a9"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+
+[compat]
+Documenter = "1.8"
