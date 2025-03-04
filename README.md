@@ -32,12 +32,21 @@ Arianna is a flexible and extensible framework for Monte Carlo simulations. Inst
 
 ## Installation
 
-To install the Arianna module, you can clone the repository and use the Julia package manager to add the module path to your environment.
+### Requirements
+- Julia version 1.9 or higher
 
-```sh
-git clone https://github.com/TheDisorderedOrganization/Arianna.jl.git
-cd Arianna
-julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()'
+### Installing Arianna
+You can install Arianna using the Julia package manager in one of two ways:
+
+1. Using the package mode (press `]` in the Julia REPL):
+```julia
+add Arianna
+```
+
+2. Using the Pkg API:
+```julia
+using Pkg
+Pkg.add("Arianna")
 ```
 
 ## Usage
@@ -74,7 +83,7 @@ We welcome contributions from the community. If you have a new system or feature
 
 ## Citing
 
-If you use Arianna in your research, please cite it! You can find the citation information in the [CITATION](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/CITATION.bib) file or directly through GitHub’s "Cite this repository" button.
+If you use Arianna in your research, please cite it! You can find the citation information in the [CITATION](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/CITATION.bib) file or directly through GitHub's "Cite this repository" button.
 
 ## License
 
