@@ -15,7 +15,6 @@ makedocs(
         sidebar_sitename = false
     ),
     modules = [Arianna],
-    doctest = false,
     warnonly = [:missing_docs],
     pages = [
         "Home" => "index.md",
@@ -31,5 +30,6 @@ makedocs(
 
 # Deploying to GitHub Pages
 deploydocs(
-    repo = "github.com/TheDisorderedOrganization/Arianna.jl.git"
+    repo = "github.com/TheDisorderedOrganization/Arianna.jl.git",
+    push_preview=true,
 )
