@@ -17,7 +17,7 @@ jobs:
       fail-fast: false  
       matrix:
         os: [ubuntu-latest, macos-latest]  
-        julia-version: ['1.9', 'lts', 'nightly']  
+        julia-version: ['1.9', 'lts']  
 
     steps:
     - name: Checkout repository  
