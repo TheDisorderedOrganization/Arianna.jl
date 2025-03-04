@@ -2,9 +2,10 @@ using Documenter
 using Arianna
 
 readme = read(joinpath(@__DIR__, "..", "README.md"), String)
-readme = replace(readme, r"<.*?>" => "")
-readme = readme[findfirst("Arianna", readme)[1]:end]
-readme = "# Arianna\n *A system-agnostic approach to Monte Carlo simulations*" * readme
+html_part = readme[1:findlast("</p>", readme)[end]]
+html_part = replace(html_part, r"<div align=\"center\">[\s\S]*?</div>" => "")
+md_part = readme[findlast("</p>", readme)[end]+1:end]
+readme = "```@raw html\n" * html_part * "\n```\n" * md_part
 write(joinpath(@__DIR__, "src", "index.md"), readme)
 
 makedocs(

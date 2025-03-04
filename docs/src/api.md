@@ -18,6 +18,3 @@ CurrentModule = Arianna
 ```@autodocs
 Modules = [Arianna]
 ```
-
-## Arianna.jl
-```@autodocs
