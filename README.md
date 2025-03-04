@@ -4,7 +4,7 @@
 
 <p align="center"><i>A system-agnostic approach to Monte Carlo simulations</i></p>
 
-<p align="center">
+<div align="center">
   <a href="https://TheDisorderedOrganization.github.io/Arianna.jl">
     <img src="https://img.shields.io/badge/docs-online-blue.svg" alt="Docs">
   </a>
@@ -17,7 +17,7 @@
   <a href="https://codecov.io/gh/TheDisorderedOrganization/Arianna.jl">
     <img src="https://codecov.io/gh/TheDisorderedOrganization/Arianna.jl/graph/badge.svg?token=URGL1HJOOI" alt="codecov">
   </a>
-</p>
+</div>
 
 <p align="center">
 Arianna is a flexible and extensible framework for Monte Carlo simulations. Instead of acting as a black-box simulator, it provides a modular structure where users define their own system and Monte Carlo "moves". The package includes some simple predefined systems for example purposes, and more complex systems are defined in other repos like <a href="https://github.com/TheDisorderedOrganization/ParticlesMC">ParticlesMC</a>.
@@ -51,7 +51,7 @@ Pkg.add("Arianna")
 
 ## Usage
 
-Arianna is designed to work with user-defined systems rather than providing predefined ones. However, to help users get started, we provide example cases such as [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/example/particle_1d/particle_1d.jl) in the [example](https://github.com/TheDisorderedOrganization/Arianna.jl/tree/main/example) folder. Once you have defined your system and the associated moves, Arianna allows you to run Monte Carlo simulations and store relevant data. The following Julia script illustrates how to set up and execute a general simulation in the [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/example/particle_1d/particle_1d.jl) example.
+Arianna is designed to work with user-defined systems rather than providing predefined ones. To learn how to use the package please see the [documentation](https://thedisorderedorganization.github.io/Arianna.jl/stable/) and the [API](https://thedisorderedorganization.github.io/Arianna.jl/stable/api/). To help users get started, we provide example cases such as [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/example/particle_1d/particle_1d.jl) in the [example](https://github.com/TheDisorderedOrganization/Arianna.jl/tree/main/example) folder. Once you have defined your system and the associated moves, Arianna allows you to run Monte Carlo simulations and store relevant data. The following Julia script illustrates how to set up and execute a general simulation in the [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/example/particle_1d/particle_1d.jl) example.
 
 ```julia
 include("example/particle_1D/particle_1d.jl")
