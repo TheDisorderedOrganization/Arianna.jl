@@ -32,4 +32,5 @@ makedocs(
 # Deploying to GitHub Pages
 deploydocs(;
     repo = "github.com/TheDisorderedOrganization/Arianna.jl.git",
+    versions = ["stable" => "v0.1.1"]
 )
