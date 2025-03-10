@@ -10,21 +10,21 @@ abstract type AriannaAlgorithm end
 
 Initialise the algorithm for the given simulation.
 """
-initialise(::AriannaAlgorithm, ::Simulation) = nothing
+initialise(::AriannaAlgorithm, ::Simulation) = return nothing
 
 """
     make_step!(::Simulation, ::AriannaAlgorithm)
 
 Perform a single step of the algorithm in the simulation.
 """
-make_step!(::Simulation, ::AriannaAlgorithm) = nothing
+make_step!(::Simulation, ::AriannaAlgorithm) = return nothing
 
 """
     finalise(::AriannaAlgorithm, ::Simulation)
 
 Finalise the algorithm for the given simulation.
 """
-finalise(::AriannaAlgorithm, ::Simulation) = nothing
+finalise(::AriannaAlgorithm, ::Simulation) = return nothing
 
 """
     write_algorithm(io, algorithm::AriannaAlgorithm, scheduler)
