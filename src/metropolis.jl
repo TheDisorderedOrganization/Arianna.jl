@@ -10,7 +10,7 @@ Concrete subtypes must implement:
 - `log_proposal_density(action, policy, parameters, system)`: Log probability density of proposing this action
 
 Optional methods:
-- `perform_action_cached!(system, action)`: Optimized version of perform_action! that can reuse cached values
+- `revert_action!(system, action)`: Optimized version of perform_action! that can reuse cached values
 """
 abstract type Action end
 
@@ -108,7 +108,7 @@ Invert/reverse an action.
 invert_action!(action::Action, system::AriannaSystem) = raise_error("invert_action!")
 
 """
-    perform_action_cached!(system, action::Action)
+    revert_action!(system, action::Action)
 
 Optimized version of perform_action! that can reuse cached values.
 
@@ -116,7 +116,7 @@ Optimized version of perform_action! that can reuse cached values.
 - `system`: System to modify
 - `action`: Action to perform
 """
-perform_action_cached!(system::AriannaSystem, action::Action) = perform_action!(system, action)
+revert_action!(system::AriannaSystem, action::Action) = perform_action!(system, action)
 
 """
     Move{A<:Action,P<:Policy,V<:AbstractArray,T<:AbstractFloat}
@@ -184,7 +184,7 @@ function mc_step!(system::AriannaSystem, action::Action, policy::Policy, paramet
     if α > rand(rng)
         return 1
     else
-        perform_action_cached!(system, action)
+        revert_action!(system, action)
         return 0
     end
 end
