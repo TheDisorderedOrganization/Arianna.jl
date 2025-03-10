@@ -100,7 +100,7 @@ function pgmc_estimate(action::Action, policy::Policy, parameters::AbstractArray
     r = reward(action, system)
     invert_action!(action, system)
     logq_backward = withgrad_log_proposal_density!(∇logq_backward, action, policy, parameters, system, ad_backend; shadow=shadow)
-    perform_action_cached!(system, action)
+    revert_action!(system, action)
     α = min(one(T), exp(Δlogp + logq_backward - logq_forward))
     j = r * α
     ∇j = j .* (isone(α) ? ∇logq_forward : ∇logq_backward)
