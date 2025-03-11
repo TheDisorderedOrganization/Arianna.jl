@@ -34,6 +34,7 @@ Write a summary of the algorithm on the given IO stream.
 function write_algorithm(io, algorithm::AriannaAlgorithm, scheduler)
     println(io, "\t" * replace(string(typeof(algorithm)), r"\{.*" => ""))
     println(io, "\t\tCalls: $(length(filter(x -> 0 < x ≤ scheduler[end], scheduler)))")
+    flush(io)
 end
 
 """
@@ -320,6 +321,7 @@ function make_step!(simulation::Simulation, ::PrintTimeSteps)
     filled_length = Int(round(percent * bar_length))
     bar = "\033[1;34m" * repeat("■", filled_length) * "\033[0m" * repeat("□", bar_length - filled_length)
     @printf("\rProgress: [%s] %.0f%% t = %d", bar, percent * 100, t)
+    flush(stdout)
 end
 
 nothing
