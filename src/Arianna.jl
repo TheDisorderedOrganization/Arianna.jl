@@ -20,6 +20,9 @@ using Printf
 Abstract type representing a system that can be simulated using methods defined in the `Arianna` module.
 """
 abstract type AriannaSystem end
+
+Base.length(::AriannaSystem) = 1 # Default length for systems
+
 export AriannaSystem
 
 include("simulation.jl")
