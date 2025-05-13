@@ -249,6 +249,7 @@ struct Metropolis{P,R<:AbstractRNG,C<:Function} <: AriannaAlgorithm
         @assert length(chains) == length(pools)
         @assert all(k -> all(move -> move.parameters == getindex.(pools, k)[1].parameters, getindex.(pools, k)), eachindex(pools[1]))
         @assert all(k -> all(move -> move.weight == getindex.(pools, k)[1].weight, getindex.(pools, k)), eachindex(pools[1]))
+        @assert all(x -> length(x) == length(chains[1]), chains)
         #Make sure that all policies and parameters across chains refer to the same objects
         policy_list = [move.policy for move in pools[1]]
         parameters_list = [move.parameters for move in pools[1]]
