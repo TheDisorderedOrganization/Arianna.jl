@@ -275,7 +275,7 @@ end
 Create a new Metropolis instance.
 
 # Arguments
-- `chains`: Vector of chains to run the algorithm on
+- `chains`: Vector of systems to run the algorithm on
 - `pool`: Pool of moves to perform sweeps over
 - `sweepstep`: Number of Monte Carlo steps per sweep
 - `seed`: Random number seed
