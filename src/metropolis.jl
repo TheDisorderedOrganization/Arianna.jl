@@ -285,7 +285,7 @@ Create a new Metropolis instance.
 # Returns
 - `algorithm`: Metropolis instance
 """
-function Metropolis(chains; pool=missing, sweepstep=1, seed=1, R=Xoshiro, parallel=false, extras...)
+function Metropolis(chains; pool=missing, sweepstep=length(chains[1]), seed=1, R=Xoshiro, parallel=false, extras...)
     pools = [deepcopy(pool) for _ in chains]
     return Metropolis(chains, pools; sweepstep=sweepstep, seed=seed, R=R, parallel=parallel)
 end
