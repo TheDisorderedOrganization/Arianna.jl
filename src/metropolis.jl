@@ -249,6 +249,7 @@ struct Metropolis{P,R<:AbstractRNG,C<:Function} <: AriannaAlgorithm
         @assert length(chains) == length(pools)
         @assert all(k -> all(move -> move.parameters == getindex.(pools, k)[1].parameters, getindex.(pools, k)), eachindex(pools[1]))
         @assert all(k -> all(move -> move.weight == getindex.(pools, k)[1].weight, getindex.(pools, k)), eachindex(pools[1]))
+        @assert all(x -> length(x) == length(chains[1]), chains)
         #Make sure that all policies and parameters across chains refer to the same objects
         policy_list = [move.policy for move in pools[1]]
         parameters_list = [move.parameters for move in pools[1]]
@@ -274,7 +275,7 @@ end
 Create a new Metropolis instance.
 
 # Arguments
-- `chains`: Vector of chains to run the algorithm on
+- `chains`: Vector of systems to run the algorithm on
 - `pool`: Pool of moves to perform sweeps over
 - `sweepstep`: Number of Monte Carlo steps per sweep
 - `seed`: Random number seed
@@ -285,7 +286,7 @@ Create a new Metropolis instance.
 # Returns
 - `algorithm`: Metropolis instance
 """
-function Metropolis(chains; pool=missing, sweepstep=1, seed=1, R=Xoshiro, parallel=false, extras...)
+function Metropolis(chains; pool=missing, sweepstep=length(chains[1]), seed=1, R=Xoshiro, parallel=false, extras...)
     pools = [deepcopy(pool) for _ in chains]
     return Metropolis(chains, pools; sweepstep=sweepstep, seed=seed, R=R, parallel=parallel)
 end
