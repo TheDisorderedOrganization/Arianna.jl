@@ -1,9 +1,4 @@
 using SafeTestsets
-using Aqua
-using Arianna
-using Test
-using DelimitedFiles
-
 
 @safetestset "Distribution Test" begin
     include("distribution_test.jl")
@@ -17,6 +12,7 @@ end
     include("ad_backends_test.jl")
 end
 
-@safetestset "Aqua Quality Assurance" begin
+@safetestset "Quality Assurance" begin
+    using Aqua
     Aqua.test_all(Arianna)
 end
