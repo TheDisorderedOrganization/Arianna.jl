@@ -14,5 +14,6 @@ end
 
 @safetestset "Quality Assurance" begin
     using Aqua
+    using Arianna
     Aqua.test_all(Arianna)
 end
