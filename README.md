@@ -9,6 +9,7 @@
   [![docs](https://img.shields.io/badge/docs-online-blue.svg)](https://TheDisorderedOrganization.github.io/Arianna.jl)
   [![license](https://img.shields.io/badge/license-GPL%203.0-red.svg)](https://github.com/TheDisorderedOrganization/MCMC/blob/main/LICENSE)
   [![ci](https://github.com/TheDisorderedOrganization/Arianna.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/TheDisorderedOrganization/Arianna.jl/actions/workflows/ci.yml)
+  [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
   [![codecov](https://codecov.io/gh/TheDisorderedOrganization/Arianna.jl/graph/badge.svg?token=URGL1HJOOI)](https://codecov.io/gh/TheDisorderedOrganization/Arianna.jl)
 
 </div>
