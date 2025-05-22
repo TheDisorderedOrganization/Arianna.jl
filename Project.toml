@@ -22,17 +22,26 @@ EnzymeExt = "Enzyme"
 ZygoteExt = "Zygote"
 
 [compat]
-julia = "1.9"
+Aqua = "0.8"
 ComponentArrays = "0.15"
 Coverage = "1.6"
+Dates = "1.9"
 Distributions = "0.25"
+DelimitedFiles = "1.9"
 Enzyme = "0.12"
 ForwardDiff = "0.10"
+LinearAlgebra = "1.9"
+Printf = "1.9"
+Random = "1.9"
 SafeTestsets = "0.1"
+Statistics = "1.9"
+Test = "1.9"
 Transducers = "0.4"
 Zygote = "0.7"
+julia = "1.9"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
@@ -40,4 +49,4 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Coverage", "ComponentArrays", "DelimitedFiles", "SafeTestsets", "Enzyme", "Zygote"]
+test = ["Test", "Coverage", "ComponentArrays", "DelimitedFiles", "SafeTestsets", "Enzyme", "Zygote", "Aqua"]

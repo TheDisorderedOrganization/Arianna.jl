@@ -11,3 +11,9 @@ end
 @safetestset "PGMG AD Backends" begin
     include("ad_backends_test.jl")
 end
+
+@safetestset "Quality Assurance" begin
+    using Aqua
+    using Arianna
+    Aqua.test_all(Arianna)
+end
