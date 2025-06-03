@@ -4,7 +4,7 @@ using Zygote
 using Enzyme
 
 
-include("../example/particle_1d/particle_1d.jl")
+include("../examples/particle_1d/particle_1d.jl")
 
 potential(x) = x^2
 
