@@ -48,4 +48,4 @@ time_steps = steps_data .- steps_data[1]
 prms = parse.(Float64, replace.(getindex.(split.(prms_data, " "), 2), r"\[|\]" => ""))
 plot(xlabel="t", ylabel="σ(t)", xscale=:log10, legend=false, title="β=$β, M=$M, η=$(optimisers[2].η)")
 plot!(time_steps[2:end], prms[2:end], lw=2)
-savefig("example/particle_1d/harmonic_oscillator/learning.png")
+savefig("examples/particle_1d/harmonic_oscillator/learning.png")

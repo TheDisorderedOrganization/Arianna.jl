@@ -48,6 +48,6 @@ trajectories = map(file -> readdlm(file)[:, 2], trj_files)
 positions = vcat(trajectories...)
 
 stephist!(positions, normalize=:pdf, lw=3, label="Simulation", c=1)
-savefig("example/particle_1d/harmonic_oscillator/density.png")
+savefig("examples/particle_1d/harmonic_oscillator/density.png")
 
 
