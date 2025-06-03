@@ -25,10 +25,16 @@ function Ising1D(N::Int, j::T, h, β::T) where {T<:AbstractFloat}
 end
 
 function compute_energy(system::Ising1D)
-    sum_neighbours = sum(system.spin[i] * system.spin[i+1] for i in 1:length(system.spin)-1)
-    pbs_neighbor = system.spin[end] * system.spin[1]
-    interaction = -system.j * (sum_neighbours + pbs_neighbor)
-    externamagnetic = -system.h * sum(system.spin)
+    return sum(compute_energy_spin(system, i) for i in 1:length(system.spin)) / 2
+end
+
+function compute_energy_spin(system::Ising1D, i::Int)
+    # Compute the energy contribution of the spin at index i
+    N = length(system.spin)
+    left = system.spin[mod1(i-1, N)]  # Previous spin (wraps around)
+    right = system.spin[mod1(i+1, N)]  # Next spin (wraps around)
+    interaction = - system.j * (left + right) * system.spin[i]
+    externamagnetic = - system.h * system.spin[i]
     return interaction + externamagnetic
 end
 
@@ -44,8 +50,10 @@ end
 
 function Arianna.perform_action!(system::Ising1D, action::Flip)
     e₁ = system.e
+    ei = compute_energy_spin(system, action.i)
     system.spin[action.i] *= -1  # Flip the spin at index i
-    system.e = compute_energy(system)
+    ef = compute_energy_spin(system, action.i)
+    system.e = e₁ - ei + ef  # Update the energy
     return (e₁, system.β), (system.e, system.β)
 end
 
@@ -68,6 +76,35 @@ function Arianna.log_proposal_density(action::Flip, ::StandardUniform, parameter
     # Uniform proposal density for flipping a spin
     return 1.0
 end
+
+struct EnergyBias <: Policy end
+
+
+function Arianna.sample_action!(action::Flip, ::EnergyBias, parameters, system::Ising1D, rng)
+    local_energy = [compute_energy_spin(system, i) for i in 1:length(system.spin)]
+    partition = sum(exp.(parameters.θ .* local_energy))  # Compute partition function
+    weights = exp.(parameters.θ .* local_energy) ./ partition # Compute probabilities based on local energy
+    if !isapprox(sum(weights), 1)
+        println(parameters.θ)
+    end
+    #println("Weights: ", weights)
+    id1 = rand(rng, Categorical(weights))
+    action.i = id1 # Randomly select a spin to flip
+    return nothing
+end
+
+function Arianna.log_proposal_density(action::Flip, ::EnergyBias, parameters, system::Ising1D)
+    local_energy = [compute_energy_spin(system, i) for i in 1:length(system.spin)]
+    partition = sum(exp.(parameters.θ * local_energy))  # Compute partition function
+    # Uniform proposal density for flipping a spin
+    return parameters.θ * local_energy[action.i] - log(partition)
+end
+
+function Arianna.PolicyGuided.reward(action::Flip, system::Ising1D)
+    # Reward is the change in energy due to flipping the spin
+    return 1.0
+end
+
 
 ###############################################################################
 ## UTILS
