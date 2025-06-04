@@ -41,10 +41,10 @@ Pkg.add("Arianna")
 
 ## Usage
 
-Arianna is designed to work with user-defined systems rather than providing predefined ones. To learn how to use Arianna please see the [documentation](https://thedisorderedorganization.github.io/Arianna.jl/stable/) and the [API](https://thedisorderedorganization.github.io/Arianna.jl/stable/api/). To help users get started, we provide example cases such as [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/example/particle_1d/particle_1d.jl) in the [example](https://github.com/TheDisorderedOrganization/Arianna.jl/tree/main/example) folder. Once you have defined your system and the associated moves, Arianna allows you to run Monte Carlo simulations and store relevant data. The following Julia script illustrates how to set up and execute a general simulation in the [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/example/particle_1d/particle_1d.jl) example.
+Arianna is designed to work with user-defined systems rather than providing predefined ones. To learn how to use Arianna please see the [documentation](https://thedisorderedorganization.github.io/Arianna.jl/stable/) and the [API](https://thedisorderedorganization.github.io/Arianna.jl/stable/api/). To help users get started, we provide example cases such as [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/examples/particle_1d/particle_1d.jl) in the [example](https://github.com/TheDisorderedOrganization/Arianna.jl/tree/main/example) folder. Once you have defined your system and the associated moves, Arianna allows you to run Monte Carlo simulations and store relevant data. The following Julia script illustrates how to set up and execute a general simulation in the [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/examples/particle_1d/particle_1d.jl) example.
 
 ```julia
-include("example/particle_1D/particle_1d.jl")
+include("examples/particle_1D/particle_1d.jl")
 
 x₀ = 0.0
 β = 2.0

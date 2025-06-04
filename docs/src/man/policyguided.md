@@ -26,10 +26,10 @@ Arianna implements PGMC through two core algorithms found in the submodule `Poli
 
 ## Running a PGMC simulation
 
-To make your Monte Carlo simulation adaptive, simply add the two algorithms from PolicyGuided to the simulation. The following Julia script demonstrates this in the [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/example/particle_1d/particle_1d.jl) example
+To make your Monte Carlo simulation adaptive, simply add the two algorithms from PolicyGuided to the simulation. The following Julia script demonstrates this in the [particle_1D.jl](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/examples/particle_1d/particle_1d.jl) example
 
 ```julia
-include("example/particle_1D/particle_1d.jl")
+include("examples/particle_1D/particle_1d.jl")
 
 x₀ = 0.0
 β = 2.0

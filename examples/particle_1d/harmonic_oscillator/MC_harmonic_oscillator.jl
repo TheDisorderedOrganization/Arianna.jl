@@ -1,4 +1,4 @@
-# EXAMPLE: PGMC Harmonic Oscillator
+# EXAMPLE: Harmonic Oscillator
 include("../particle_1d.jl")
 
 potential(x) = x^2
@@ -11,26 +11,21 @@ rng = Xoshiro(seed)
 β = 2.0
 M = 10
 chains = [System(4rand(rng) - 2, β) for _ in 1:M]
-pool = (
-    Move(Displacement(0.0), StandardGaussian(), ComponentArray(σ=0.2), 0.6),
-    Move(Displacement(0.0), StandardGaussian(), ComponentArray(σ=0.1), 0.4),
-) 
-optimisers = (Static(), VPG(0.001))
+pool = (Move(Displacement(0.0), StandardGaussian(), ComponentArray(σ=0.1), 1.0),)
 steps = 10^5
 burn = 1000
 block = [0, 10]
 sampletimes = build_schedule(steps, burn, block)
-path = "data/PGMC/particle_1d/Harmonic/beta$β/M$M/seed$seed"
+path = "data/MC/particle_1d/Harmonic/beta$β/M$M/seed$seed"
+
 algorithm_list = (
     (algorithm=Metropolis, pool=pool, seed=seed, parallel=false),
-    (algorithm=PolicyGradientEstimator, dependencies=(Metropolis,), optimisers=optimisers, parallel=false),
-    (algorithm=PolicyGradientUpdate, dependencies=(PolicyGradientEstimator,)),
     (algorithm=StoreCallbacks, callbacks=(callback_energy, callback_acceptance), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
-    (algorithm=StoreParameters, dependencies=(Metropolis,), scheduler=sampletimes),
+    (algorithm=StoreBackups, scheduler=build_schedule(steps, burn, steps ÷ 10), store_first=true, store_last=true),
     (algorithm=StoreLastFrames, scheduler=[steps]),
     (algorithm=PrintTimeSteps, scheduler=build_schedule(steps, burn, steps ÷ 10)),
-)
+) 
 simulation = Simulation(chains, algorithm_list, steps; path=path, verbose=true)
 run!(simulation)
 
@@ -42,10 +37,17 @@ default(tickfontsize=15, guidefontsize=15, titlefontsize=15, legendfontsize=15,
 energies = readdlm(joinpath(path, "energy.dat"))[:, 2]
 @show mean(energies), std(energies)
 
-prms_data = readlines(joinpath(path, "parameters", "2", "parameters.dat"))
-steps_data = parse.(Int, getindex.(split.(prms_data, " "), 1))
-time_steps = steps_data .- steps_data[1]
-prms = parse.(Float64, replace.(getindex.(split.(prms_data, " "), 2), r"\[|\]" => ""))
-plot(xlabel="t", ylabel="σ(t)", xscale=:log10, legend=false, title="β=$β, M=$M, η=$(optimisers[2].η)")
-plot!(time_steps[2:end], prms[2:end], lw=2)
-savefig("example/particle_1d/harmonic_oscillator/learning.png")
+target_density(x, β) = exp(-β * x^2) * sqrt(β / pi)
+xx = LinRange(-2.0, 2.0, 1000)
+target = target_density.(xx, β)
+plot(xlabel="x", ylabel="p(x)", title="β=$β, M=$M", legend=:bottomright)
+plot!(xx, target, lw=3, label="Target density", c=:red)
+
+trj_files = [joinpath(dir, "trajectory.dat") for dir in readdir(joinpath(path, "trajectories"), join=true)]
+trajectories = map(file -> readdlm(file)[:, 2], trj_files)
+positions = vcat(trajectories...)
+
+stephist!(positions, normalize=:pdf, lw=3, label="Simulation", c=1)
+savefig("examples/particle_1d/harmonic_oscillator/density.png")
+
+
