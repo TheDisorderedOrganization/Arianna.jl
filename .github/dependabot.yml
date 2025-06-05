@@ -4,7 +4,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"  # Root directory (where Project.toml is)
     schedule:
-      interval: "daily"  # Checks for updates every week
+      interval: "weekly"  # Checks for updates every week
     open-pull-requests-limit: 5  # Limit to 5 open PRs at a time
     labels:
       - "dependencies"
