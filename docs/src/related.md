@@ -7,6 +7,7 @@ For MCMC sampling, some related packages include:
 - [AdvancedMH.jl](https://github.com/TuringLang/AdvancedMH.jl) – A package that provides enhanced Metropolis-Hastings algorithms with flexible proposal distributions.
 
 For more general Monte Carlo and physics-based simulations:
+- [AbstractMCMC.jl](https://github.com/TuringLang/AbstractMCMC.jl) - Abstract types and interfaces for Markov chain Monte Carlo methods for `TuringLang` MC modules.
 - [MonteCarloX.jl](https://github.com/zierenberg/MonteCarloX.jl) – A Monte Carlo package package similar in spirit to Arianna that separates the algorithmic part from the system.
 - [Molly.jl](https://github.com/JuliaMolSim/Molly.jl) – A molecular dynamics package exposing internals for customization that can also perform basic Monte Carlo simulations.
 - [MonteCarlo.jl](https://carstenbauer.github.io/MonteCarlo.jl/dev/) – A framework for Monte Carlo simulations with support for various sampling techniques, mostly oriented to spin systems and Quantum Monte Carlo.
