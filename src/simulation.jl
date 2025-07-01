@@ -146,7 +146,7 @@ end
 function update_summary(simulation, sim_time)
     open(joinpath(simulation.path, "summary.log"), "a") do file
         println(file, "Report:")
-        println(file, "\tSimulation time: $sim_time s")
+        println(file, "\tSimulation time: $(sim_time) s")
     end
 end
 
@@ -189,7 +189,7 @@ function run!(simulation::Simulation)
                 end
             end
         end
-        simulation.verbose && println("\nSimulation completed in $sim_time s")
+        simulation.verbose && println("\nSimulation completed in $(sim_time) s")
         update_summary(simulation, sim_time)
     finally
         simulation.verbose && println("\033[1;32m\nFINALISATION\033[0m")

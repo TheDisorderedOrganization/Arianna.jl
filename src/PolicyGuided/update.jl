@@ -62,7 +62,7 @@ function write_algorithm(io, algorithm::PolicyGradientUpdate, scheduler)
     println(io, "\t\tLearnable moves: $(algorithm.learn_ids)")
     println(io, "\t\tOptimisers:")
     for (k, opt) in enumerate(algorithm.optimisers)
-        println(io, "\t\t\tMove $k: " * replace(string(opt), r"\{[^\{\}]*\}" => ""))
+        println(io, "\t\t\tMove $(k): " * replace(string(opt), r"\{[^\{\}]*\}" => ""))
     end
 end
 
