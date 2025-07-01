@@ -17,7 +17,7 @@ struct ForwardDiff_Backend <: AD_Backend end
 
 Compute the reward for an action in a given system.
 """
-reward(action::Action, system::AriannaSystem) = raise_error("reward")
+reward(action::Action, system::AriannaSystem) = raise_missingfunction("reward")
 
 """
     withgrad_log_proposal_density!(∇logq::T, action::Action, policy::Policy, parameters::T, system::AriannaSystem, ::ForwardDiff_Backend;

@@ -24,15 +24,21 @@ Concrete subtypes work together with specific Action types to implement the prop
 """
 abstract type Policy end
 
+struct AriannaBaseFunctionMissing <: Exception
+    message::String
+end
+
+Base.showerror(io::IO, e::AriannaBaseFunctionMissing) = print(io, "AriannaBaseFunctionMissing: $(e.message)")
+
 """
-    raise_error(s)
+    raise_missingfunction(s)
 
 Helper function to raise errors for unimplemented required methods.
 
 # Arguments
 - `s`: String describing the missing method implementation
 """
-raise_error(s) = error("No $(s) is defined")
+raise_missingfunction(s) = throw(AriannaBaseFunctionMissing("$(s) is not defined. Please implement this required method."))
 
 """
     sample_action!(action::Action, policy::Policy, parameters, system::AriannaSystem, rng)
@@ -46,7 +52,7 @@ Sample a new action from the policy.
 - `system`: System the action will be applied to
 - `rng`: Random number generator
 """
-sample_action!(action::Action, policy::Policy, parameters, system::AriannaSystem, rng) = raise_error("sample_action!")
+sample_action!(::Action, ::Policy, parameters, ::AriannaSystem, rng) = raise_missingfunction("sample_action!")
 
 """
     log_proposal_density(action, policy, parameters, system::AriannaSystem)
@@ -59,7 +65,7 @@ Calculate the log probability density of proposing the given action.
 - `parameters`: Parameters of the policy
 - `system`: System the action is applied to
 """
-log_proposal_density(action, policy, parameters, system::AriannaSystem) = raise_error("log_proposal_density")
+log_proposal_density(action, policy, parameters, ::AriannaSystem) = raise_missingfunction("log_proposal_density")
 
 """
     perform_action!(system::AriannaSystem, action::Action)
@@ -73,7 +79,7 @@ Apply the action to modify the system state.
 # Returns
 A tuple of (x₁, x₂) containing the old and new states
 """
-perform_action!(system::AriannaSystem, action::Action) = raise_error("perform_action!")
+perform_action!(::AriannaSystem, ::Action) = raise_missingfunction("perform_action!")
 
 """
     unnormalised_log_target_density(x, system)
@@ -84,7 +90,7 @@ Calculate the unnormalized log probability density of a system state.
 - `x`: System state
 - `system`: System object
 """
-unnormalised_log_target_density(x, system::AriannaSystem) = raise_error("unnormalised_log_target_density")
+unnormalised_log_target_density(x, ::AriannaSystem) = raise_missingfunction("unnormalised_log_target_density")
 """
     delta_log_target_density(x₁, x₂, system::AriannaSystem)
 
@@ -105,7 +111,7 @@ Invert/reverse an action.
 - `action`: Action to invert
 - `system`: System the action was applied to
 """
-invert_action!(action::Action, system::AriannaSystem) = raise_error("invert_action!")
+invert_action!(::Action, ::AriannaSystem) = raise_missingfunction("invert_action!")
 
 """
     revert_action!(system, action::Action)
