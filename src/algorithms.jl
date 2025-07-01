@@ -160,10 +160,10 @@ struct StoreTrajectories{F<:Format} <: AriannaAlgorithm
     store_last::Bool
 
     function StoreTrajectories(chains, path, fmt; store_first::Bool=true, store_last::Bool=false)
-        dirs = joinpath.(path, "trajectories", ["$c" for c in eachindex(chains)])
+        dirs = joinpath.(path, "trajectories", ["$(c)" for c in eachindex(chains)])
         mkpath.(dirs)
         ext = fmt.extension
-        paths = joinpath.(dirs, "trajectory$ext")
+        paths = joinpath.(dirs, "trajectory$(ext)")
         files = Vector{IOStream}(undef, length(paths))
         try
             files = open.(paths, "w")
@@ -185,7 +185,7 @@ end
 Store the system trajectory at time t to the given IO stream in the specified format.
 """
 function store_trajectory(io, system::AriannaSystem, t, fmt::Format)
-    println(io, "$t, $system")
+    println(io, "$(t), $(system)")
     return nothing
 end
 
@@ -223,10 +223,10 @@ struct StoreLastFrames <: AriannaAlgorithm
     paths::Vector{String}
     fmt::Format
     function StoreLastFrames(chains, path, fmt)
-        dirs = joinpath.(path, "trajectories", ["$c" for c in eachindex(chains)])
+        dirs = joinpath.(path, "trajectories", ["$(c)" for c in eachindex(chains)])
         mkpath.(dirs)
         ext = fmt.extension
-        paths = joinpath.(dirs, "lastframe$ext")
+        paths = joinpath.(dirs, "lastframe$(ext)")
         return new(paths, fmt)
     end
 
@@ -268,7 +268,7 @@ struct StoreBackups <: AriannaAlgorithm
     store_first::Bool
     store_last::Bool
     function StoreBackups(chains, path, fmt; store_first::Bool=false, store_last::Bool=false)
-        dirs = joinpath.(path, "trajectories", ["$c" for c in eachindex(chains)])
+        dirs = joinpath.(path, "trajectories", ["$(c)" for c in eachindex(chains)])
         mkpath.(dirs)
         return new(dirs, fmt, store_first, store_last)
     end

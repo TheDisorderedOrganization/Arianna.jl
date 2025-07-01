@@ -32,7 +32,7 @@ Helper function to raise errors for unimplemented required methods.
 # Arguments
 - `s`: String describing the missing method implementation
 """
-raise_error(s) = error("No $s is defined")
+raise_error(s) = error("No $(s) is defined")
 
 """
     sample_action!(action::Action, policy::Policy, parameters, system::AriannaSystem, rng)
@@ -355,7 +355,7 @@ function write_algorithm(io, algorithm::Metropolis, scheduler)
     end
     println(io, "\t\tMoves:")
     for (k, move) in enumerate(algorithm.pools[1])
-        println(io, "\t\t\tMove $k:")
+        println(io, "\t\t\tMove $(k):")
         println(io, "\t\t\t\tAction: " * replace(string(typeof(move.action)), r"\{.*" => ""))
         println(io, "\t\t\t\tPolicy: " * replace(string(typeof(move.policy)), r"\{.*" => ""))
         println(io, "\t\t\t\tParameters: " * write_parameters(move.policy, move.parameters))
@@ -387,7 +387,7 @@ struct StoreParameters{V<:AbstractArray} <: AriannaAlgorithm
 
     function StoreParameters(pool, path; ids=collect(eachindex(pool)), store_first::Bool=true, store_last::Bool=false)
         parameters_list = [move.parameters for move in pool[ids]]
-        dirs = joinpath.(path, "parameters", ["$k" for k in ids])
+        dirs = joinpath.(path, "parameters", ["$(k)" for k in ids])
         mkpath.(dirs)
         paths = joinpath.(dirs, "parameters.dat")
         files = Vector{IOStream}(undef, length(paths))
