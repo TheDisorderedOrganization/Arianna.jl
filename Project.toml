@@ -4,6 +4,7 @@ authors = ["Leonardo Galliano <leonardo.galliano@espci.fr>", "Romain Simon <roma
 version = "0.1.4"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -23,6 +24,7 @@ EnzymeExt = "Enzyme"
 ZygoteExt = "Zygote"
 
 [compat]
+AbstractTrees = "0.4"
 Aqua = "0.8"
 ComponentArrays = "0.15"
 Coverage = "1.6"
