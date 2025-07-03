@@ -33,7 +33,7 @@ AbstractTrees.children(n::Node) = n.children
 
 function AbstractTrees.printnode(io::IO, n::Node)
     if n.ntype == :function
-        print(io, "Function: ", n.label, " ", n.state)
+        print(io, "Function: ", n.label, rpad("", 35 - length(string(n.label))), n.state)
     elseif n.ntype == :AriannaSystem
         printstyled(io, "System: ", n.label, color=:green)
     elseif n.ntype == :Action
@@ -120,9 +120,11 @@ function collect_function_defs!(results::Set, node::SyntaxNode)
             aname = Symbol(node.children[1].children[1].children[1])
             fname = Symbol(node.children[1].children[1].children[2])
             nargs = length(node.children[1].children[2:end])
-            for args in children(node.children[1].children[2:end])
-                if length(args.children) == 2 && !isnothing(args.children[2])
-                    push!(arg_types, Symbol(args.children[2]))
+            for args in node.children[1].children[2:end]
+                if !isnothing(args.children)
+                    if Symbol(kind(args)) == :(::)
+                        push!(arg_types, Symbol(args.children[end]))
+                    end
                 end
             end
             if aname == :Arianna
@@ -175,16 +177,16 @@ function construct_tree(defined_structs, defined_functions)
                 if child.label == fname
                     child.state = "✅ Defined"
                     continue
-
+                end
                 # Pour les actions
                 if child.ntype == :Action
-                    end
                     if child.label ∉ argtypes
                         continue
                     end
                     for f in child.children
                         if f.label == fname
                             f.state = "✅ Defined"
+                            continue
                         end
                     end
                     # Pour les policies
@@ -208,30 +210,24 @@ function construct_tree(defined_structs, defined_functions)
     return tree
 end
 
-function lint_functions(required_functions::Vector{Tuple{Symbol, Int}}, defined_functions::Set{Tuple{Symbol, Int}}; optional::Bool=false)
 
-    type_functions = optional ? "optional" : "required" 
-    missing = filter(r -> !(r in defined_functions), required_functions)
-
-    if !isempty(missing)
-        println("❌ Missing $(type_functions) function definitions:")
-        for (name, arity) in missing
-            println("  - name: $(name) - arity: $(arity)")
-        end
+function run(path::String, policy_guided::Bool=false)
+    files = String[]
+    if isfile(path) && endswith(path, ".jl")
+        push!(files, path)
+    elseif isdir(path)
+        files = filter(f -> endswith(f, ".jl"),
+                       reduce(vcat, [joinpath(root, f) for (root, _, files) in walkdir(path) for f in files]))
     else
-        println("✅ All $(type_functions) functions are defined.")
+        error("The file or the folder doesn't exist")
     end
-end
-
-function run(file_path::String, policy_guided::Bool=false)
-    if !isfile(file_path)
-        error("File not found: $file_path")
-    end
-    code = read(file_path, String)
-    defined_structs = extract_defined_structs(code)
-    defined_functions = extract_defined_functions(code)
+    # Concatène tout le code
+    full_code = join(read.(files, String), "\n")
+    # Analyse globale
+    defined_structs = extract_defined_structs(full_code)
+    defined_functions = extract_defined_functions(full_code)
     tree = construct_tree(defined_structs, defined_functions)
-    println("Linting file: $file_path")
+    println("Linting : $path")
     print_tree(tree)
 end
 
