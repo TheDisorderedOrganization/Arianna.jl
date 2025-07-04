@@ -18,7 +18,7 @@ const REQUIRED_FUNCTIONS = [
     (:invert_action!, 2),   
 ]
 
-const OPTIONAL_FUNCTIONS= [
+const OPTIONAL_FUNCTIONS = [
      (:revert_action!, 2),
 ]
 
@@ -57,6 +57,7 @@ function add_action_system_node!(system_node, aname, actions)
     push!(action_node.children, Node(:perform_action!, :function, Node[], "❌ Not defined"))
     push!(action_node.children, Node(:invert_action!, :function, Node[], "❌ Not defined"))
     push!(action_node.children, Node(:revert_action!, :function, Node[], "❕ Not defined"))
+    push!(action_node.children, Node(:reward, :function, Node[], "❕ Not defined"))
     actions[aname] = action_node
     push!(system_node.children, action_node)
 end
@@ -115,23 +116,43 @@ end
 function collect_function_defs!(results::Set, node::SyntaxNode)
     node_kind = kind(node)
     arg_types = Set{Symbol}()
-    if Symbol(node_kind) == :function
-        try
-            aname = Symbol(node.children[1].children[1].children[1])
-            fname = Symbol(node.children[1].children[1].children[2])
-            nargs = length(node.children[1].children[2:end])
-            for args in node.children[1].children[2:end]
-                if !isnothing(args.children)
-                    if Symbol(kind(args)) == :(::)
-                        push!(arg_types, Symbol(args.children[end]))
-                    end
+    if Symbol(node_kind) != :function
+        return
+    end
+    fn_header = node.children[1]
+    fn_name_expr = fn_header.children[1]
+
+    aname1 = nothing
+    aname2 = nothing
+    fname = nothing
+
+    # Extract function name parts
+    children = fn_name_expr.children
+    try
+        if length(children) == 2
+            if !isnothing(children[1].children)
+                aname1 = Symbol(children[1].children[1])
+                aname2 = Symbol(children[1].children[2])
+                fname = Symbol(children[2])
+            else
+                aname1 = Symbol(children[1])
+                fname = Symbol(children[2])
+            end
+        end
+        nargs = length(fn_header.children[2:end])
+        for args in fn_header.children[2:end]
+            if !isnothing(args.children)
+                if Symbol(kind(args)) == :(::)
+                    push!(arg_types, Symbol(args.children[end]))
                 end
             end
-            if aname == :Arianna
+        end
+        if aname1 == :Arianna
+            if isnothing(aname2) || aname2 == :PolicyGuided
                 push!(results, (fname, nargs, arg_types))
             end
-        catch
         end
+    catch
     end
 end
 
@@ -142,7 +163,7 @@ function construct_tree(defined_structs, defined_functions)
     tree = Node(:root, :root, Node[], "")
 
     # 1. Ajout des systèmes
-    println(defined_structs)
+    println(defined_functions)
     for (sname, tname) in defined_structs
         if tname == :AriannaSystem
             add_system_tree!(tree, sname, systems)
@@ -210,8 +231,7 @@ function construct_tree(defined_structs, defined_functions)
     return tree
 end
 
-
-function run(path::String, policy_guided::Bool=false)
+function run_linter(path::String)
     files = String[]
     if isfile(path) && endswith(path, ".jl")
         push!(files, path)
