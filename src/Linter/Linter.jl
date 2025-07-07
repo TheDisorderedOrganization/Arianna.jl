@@ -163,7 +163,6 @@ function construct_tree(defined_structs, defined_functions)
     tree = Node(:root, :root, Node[], "")
 
     # 1. Ajout des systèmes
-    println(defined_functions)
     for (sname, tname) in defined_structs
         if tname == :AriannaSystem
             add_system_tree!(tree, sname, systems)
@@ -183,8 +182,12 @@ function construct_tree(defined_structs, defined_functions)
     # 3. Ajout des policies
     for (pname, tname) in defined_structs
         if tname == :Policy
-            for act in values(actions)
-                add_policy_action_node!(act, pname, policies)
+            for sys in values(systems)
+                for child in sys.children
+                    if child.ntype == :Action
+                        add_policy_action_node!(child, pname, policies)
+                    end
+                end
             end
         end
     end
