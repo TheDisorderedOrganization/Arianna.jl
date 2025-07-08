@@ -40,5 +40,6 @@ export mc_step!, mc_sweep!
 export Metropolis, callback_acceptance, StoreParameters
 
 include("PolicyGuided/PolicyGuided.jl")
+include("Linter/Linter.jl")
 
 end
