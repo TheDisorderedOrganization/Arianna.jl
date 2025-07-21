@@ -82,4 +82,4 @@ Linting : examples/particle_1d/particle_1d.jl
       └─ Policy: StandardUniform
          ├─ Function: sample_action!                     ✅ Defined
          └─ Function: log_proposal_density               ✅ Defined
-````
+```
