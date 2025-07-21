@@ -58,6 +58,21 @@ function Arianna.sample_action!(action::Displacement, ::StandardGaussian, parame
     return nothing
 end
 
+struct StandardUniform <: Policy end
+
+setup_parameters(::StandardUniform) = ComponentArray(l=1.0)
+
+function Arianna.log_proposal_density(::Displacement, ::StandardUniform, parameters, system::Particle)
+    return -np.log(parameters.l)
+end
+
+function Arianna.sample_action!(action::Displacement, ::StandardUniform, parameters, ::Particle, rng)
+    action.δ = rand(rng) * parameters.l - parameters.l/2
+    return nothing
+end
+
+
+
 ###############################################################################
 ## UTILS
 function Arianna.store_trajectory(io, system::Particle, t::Int, format::DAT)
