@@ -57,3 +57,29 @@ end
 ```
 
 By modifying and extending the existing particle_1D.jl example, you can create a variety of physical and mathematical models suitable for MC simulations.
+
+## Checking if everything has been implemented
+
+To check if all required functions have been implemented, you can run `Arianna.Linter.run_linter("path/to/your/folder/or/file")`. This will output a tree of functions and structs indicating what systems / actions / policies / functions are implemented.
+
+**Example**
+
+```julia
+julia> Arianna.Linter.run_linter("examples/particle_1d/particle_1D.jl")
+
+Linting : examples/particle_1d/particle_1d.jl
+
+└─ System: Particle
+   ├─ Function: unnormalised_log_target_density    ✅ Defined
+   └─ Action: Displacement
+      ├─ Function: perform_action!                    ✅ Defined
+      ├─ Function: invert_action!                     ✅ Defined
+      ├─ Function: revert_action!                     ❕ Not defined
+      ├─ Function: reward                             ✅ Defined
+      ├─ Policy: StandardGaussian
+      │  ├─ Function: sample_action!                     ✅ Defined
+      │  └─ Function: log_proposal_density               ✅ Defined
+      └─ Policy: StandardUniform
+         ├─ Function: sample_action!                     ✅ Defined
+         └─ Function: log_proposal_density               ✅ Defined
+````

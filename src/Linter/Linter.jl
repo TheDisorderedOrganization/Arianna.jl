@@ -1,3 +1,9 @@
+"""
+    Linter
+
+Module for linting user's code in the Arianna framework.
+It checks for the presence of required structs, functions, and their definitions.
+"""
 module Linter
 
 using JuliaSyntax
@@ -22,6 +28,22 @@ const OPTIONAL_FUNCTIONS = [
      (:revert_action!, 2),
 ]
 
+"""
+    Node
+
+Represents a node in the hierarchical Arianna system tree. Each node can represent a system, action,
+policy, or function, and may contain child nodes.
+
+# Fields
+- `label::Symbol`: The name or identifier of the node (e.g., function or struct name).
+- `ntype::Symbol`: The type of the node (e.g., `:System`, `:Action`, `:Policy`, or `:Function`).
+- `toptype::Symbol`: The top-level category the node belongs to (typically used for system type inheritance).
+- `children::Vector{Node}`: A list of child `Node`s representing the structure beneath this node.
+- `state::String`: The linting state of the node (e.g., `"✅ Defined"` or `"❌ Missing"`).
+
+# Usage
+Used to build and represent the structured tree for static analysis and linting of Arianna-based systems.
+"""
 mutable struct Node
     label::Symbol
     ntype::Symbol
@@ -33,6 +55,21 @@ end
 AbstractTrees.children(n::Node) = n.children
 
 
+"""
+    AbstractTrees.printnode(io::IO, n::Node)
+
+Prints a formatted representation of a `Node` object to the given IO stream.
+
+Depending on the `toptype` of the node, the output is styled and labeled accordingly:
+- If `toptype` is `:function`, prints the function label and its state, padded for alignment.
+- If `toptype` is `:AriannaSystem`, prints the system label in green.
+- If `toptype` is `:Action`, prints the action label in red.
+- If `toptype` is `:Policy`, prints the policy label in blue.
+
+# Arguments
+- `io::IO`: The IO stream to print to.
+- `n::Node`: The node to be printed.
+"""
 function AbstractTrees.printnode(io::IO, n::Node)
     if n.toptype == :function
         print(io, "Function: ", n.label, rpad("", 35 - length(string(n.label))), n.state)
@@ -45,12 +82,21 @@ function AbstractTrees.printnode(io::IO, n::Node)
     end
 end
 
-
 """
-    add_policy_node!(policies, pname, ptype=:Policy)
+    add_policy_node!(policies, pname; ptype=:Policy)
 
-Add a policy node with name `pname` and type `ptype` to the `policies` collection.
-The policy node will have its required function children initialized as "Not defined".
+Add a new policy node to the `policies` collection.
+
+# Arguments
+- `policies`: The collection (e.g., dictionary or custom structure) to which the policy node will be added.
+- `pname`: The name (identifier) of the policy node.
+- `ptype`: The type of the policy node (default is `:Policy`).
+
+# Behavior
+Initializes the policy node with its required function children set to `"Not defined"`.
+
+# Returns
+Modifies `policies` in-place by adding the new policy node.
 """
 function add_policy_node!(policies, pname, ptype=:Policy)
     policy_node = Node(pname, ptype, :Policy, Node[], "✅ Defined")
@@ -61,10 +107,21 @@ function add_policy_node!(policies, pname, ptype=:Policy)
 end
 
 """
-    add_action_node!(actions, aname, policies, atype=:Action)
+    add_action_node!(actions, aname, policies; atype=:Action)
 
-Add an action node with name `aname` and type `atype` to the `actions` collection.
-The action node will have its required function children and all given `policies` as children.
+Adds a new action node to the `actions` collection.
+
+# Arguments
+- `actions`: The collection to which the new action node will be added.
+- `aname`: The name of the action node.
+- `policies`: A list of policy nodes to attach as children to the action node.
+- `atype`: (Optional) The type of the node, defaults to `:Action`.
+
+# Behavior
+Creates an action node with the specified name and type, attaches all required function children, and adds the provided `policies` as children nodes.
+
+# Returns
+Modifies `actions` in-place by adding the new action node.
 """
 function add_action_node!(actions, aname, policies, atype=:Action)
     action_node = Node(aname, atype, :Action, Node[], "✅ Defined")
@@ -82,8 +139,19 @@ end
 """
     add_system_node!(systems, sname, actions; tname=:AriannaSystem)
 
-Add a system node with name `sname` and type `tname` to the `systems` collection.
-The system node will have its required function child and all given `actions` as children.
+Add a new system node to the `systems` collection.
+
+# Arguments
+- `systems`: The collection to which the system node will be added.
+- `sname`: Symbol or string specifying the name of the system node.
+- `actions`: A collection of actions to be added as children of the system node.
+- `tname`: (Optional) Symbol specifying the type of the system node. Defaults to `:AriannaSystem`.
+
+# Behavior
+Creates a system node with the specified name and type, attaches a required function child, and adds all provided actions as children nodes.
+
+# Returns
+Modifies `systems` in-place by adding the new system node.
 """
 function add_system_node!(systems, sname, actions; tname=:AriannaSystem)
     system_node = Node(sname, tname, :AriannaSystem, Node[], "✅ Defined")
@@ -98,7 +166,13 @@ end
 """
     extract_defined_types(code::String) -> Set{Symbol}
 
-Parse the given Julia `code` and return a set of all defined abstract types.
+Analyze the provided Julia source code and return a set containing the names of all abstract types defined within it.
+
+# Arguments
+- `code::String`: A string containing Julia source code to be parsed.
+
+# Returns
+- `Set{Symbol}`: A set of symbols, each representing the name of an abstract type defined in the code.
 """
 function extract_defined_types(code::String)
     tree = parseall(SyntaxNode, code)
@@ -110,13 +184,21 @@ end
 """
     extract_defined_structs(code::String; new_types=nothing) -> Set{Tuple{Symbol, Symbol}}
 
-Parse the given Julia `code` and return a set of tuples (struct_name, struct_type) for all defined structs.
-Optionally, `new_types` can be provided to check for additional struct types.
+Parses the provided Julia source `code` and returns a set of tuples `(struct_name, struct_type)` for each struct definition found.
+
+- `struct_name`: The name of the struct as a `Symbol`.
+- `struct_type`: The type of the struct as a `Symbol` (e.g., `:mutable`, `:struct`, or any custom type in `new_types`).
+
+# Arguments
+- `code::String`: The Julia source code to analyze.
+- `new_types`: (optional) An iterable of additional struct types to recognize beyond the default `struct` and `mutable struct`.
+
+# Returns
+- `Set{Tuple{Symbol, Symbol}}`: A set containing tuples of struct names and their corresponding types.
 """
 function extract_defined_structs(code::String; new_types=nothing)
     tree = parseall(SyntaxNode, code)
     results = Set{Tuple{Symbol, Symbol}}()
-    println(new_types)
     collect_defined!(results, tree, :struct; new_types=new_types)
     return results
 end
@@ -124,7 +206,17 @@ end
 """
     extract_defined_functions(code::String) -> Set{Tuple{Symbol, Int, Set{Symbol}}}
 
-Parse the given Julia `code` and return a set of tuples (function_name, arity, argument_types) for all defined functions.
+Parses the provided Julia source `code` and returns a set of tuples describing each function definition found.
+
+- `function_name`: The name of the function as a `Symbol`.
+- `arity`: The number of arguments the function takes (as an `Int`).
+- `arg_types`: A `Set{Symbol}` representing the types of the arguments, if specified; otherwise, the set may be empty.
+
+# Arguments
+- `code::String`: The Julia source code to analyze.
+
+# Returns
+- `Set{Tuple{Symbol, Int, Set{Symbol}}}`: A set containing tuples of function names, arities, and sets of argument type symbols.
 """
 function extract_defined_functions(code::String)
     tree = parseall(SyntaxNode, code)
@@ -136,8 +228,19 @@ end
 """
     collect_defined!(results, node, symb::Symbol; new_types=nothing)
 
-Recursively traverse the syntax tree starting at `node` and collect definitions of the type specified by `symb`
-(:abstract, :struct, or :function) into `results`. Optionally, `new_types` can be provided for struct collection.
+Recursively traverses the syntax tree starting at `node` and collects definitions of the specified kind into `results`.
+
+- `symb`: The type of definitions to collect (`:abstract`, `:struct`, or `:function`).
+- `new_types`: Optional set of additional struct types to recognize when `symb == :struct`.
+
+# Arguments
+- `results`: A mutable collection to store the collected definitions.
+- `node`: A `SyntaxNode` from CSTParser representing the current location in the syntax tree.
+- `symb::Symbol`: The kind of definition to collect.
+- `new_types`: (optional) Additional struct types beyond the default ones.
+
+# Returns
+- Nothing. The function modifies `results` in place.
 """
 function collect_defined!(results, node, symb::Symbol; new_types=nothing)
     
@@ -163,7 +266,16 @@ end
 """
     collect_defined_types!(results::Set, node)
 
-Helper function to collect abstract type definitions from the syntax tree node into `results`.
+Helper function that collects abstract type definitions from the given `node` into `results`.
+
+Only types that inherit from `AriannaSystem` are collected.
+
+# Arguments
+- `results::Set`: A mutable set to store the collected abstract type names.
+- `node`: A `SyntaxNode` to examine.
+
+# Returns
+- Nothing. The function modifies `results` in place.
 """
 function collect_defined_types!(results::Set, node)
     node_kind = kind(node)
@@ -186,8 +298,17 @@ end
 """
     collect_defined_structs!(results, node::SyntaxNode; new_types=nothing)
 
-Helper function to collect struct definitions from the syntax tree node into `results`.
-Optionally, `new_types` can be provided for additional struct types.
+Helper function that collects struct definitions from the given `node` into `results`.
+
+Structs are included only if their declared type is found in `REQUIRED_STRUCTS` or in the optional `new_types` set.
+
+# Arguments
+- `results`: A mutable set to store `(struct_name, struct_type)` tuples.
+- `node::SyntaxNode`: The node to examine.
+- `new_types`: (optional) A set of additional struct types to recognize.
+
+# Returns
+- Nothing. The function modifies `results` in place.
 """
 function collect_defined_structs!(results, node::SyntaxNode; new_types=nothing)
     node_kind = kind(node)
@@ -218,8 +339,21 @@ end
 """
     collect_defined_functions!(results, node::SyntaxNode)
 
-Helper function to collect function definitions from the syntax tree node into `results`.
-Each function is stored as a tuple (function_name, arity, argument_types).
+Helper function that collects function definitions from the given `node` into `results`.
+
+Functions are only collected if they belong to `Arianna` or `Arianna.PolicyGuided` namespaces.
+
+Each entry is stored as a tuple:
+- `function_name`: The name of the function as a `Symbol`.
+- `arity`: The number of arguments.
+- `arg_types`: A `Set{Symbol}` of the argument type names, if specified.
+
+# Arguments
+- `results`: A mutable set to store `(function_name, arity, arg_types)` tuples.
+- `node::SyntaxNode`: The node to examine.
+
+# Returns
+- Nothing. The function modifies `results` in place.
 """
 function collect_defined_functions!(results, node::SyntaxNode)
     node_kind = kind(node)
@@ -267,9 +401,20 @@ end
 """
     construct_tree(defined_structs, defined_functions, defined_types) -> Node
 
-Build the hierarchical tree of systems, actions, policies, and their required functions
-from the sets of defined structs, functions, and types.
-Returns the root node of the tree.
+Builds a hierarchical tree representing the structure of an Arianna system from the provided sets
+of defined structs, functions, and abstract types.
+
+Each system node may contain actions, which in turn may contain policies, each requiring specific functions.
+The function cross-references the required functions with the provided `defined_functions` and marks
+them as defined if present.
+
+# Arguments
+- `defined_structs`: A set of tuples `(struct_name::Symbol, struct_type::Symbol)` representing defined structs.
+- `defined_functions`: A set of tuples `(function_name::Symbol, arity::Int, arg_types::Set{Symbol})` representing defined functions.
+- `defined_types`: A set of `Symbol`s representing additional abstract system types.
+
+# Returns
+- `Node`: The root node of the constructed tree.
 """
 function construct_tree(defined_structs, defined_functions, defined_types)
     systems = Set{Node}()
@@ -340,11 +485,22 @@ function construct_tree(defined_structs, defined_functions, defined_types)
 end
 
 """
-    run_linter(path::String)
+    construct_tree(defined_structs, defined_functions, defined_types) -> Node
 
-Run the linter on the given `path`, which can be a Julia file or a folder.
-All Julia files found are concatenated and analyzed together.
-Prints the resulting tree structure and linting results.
+Builds a hierarchical tree representing the structure of an Arianna system from the provided sets
+of defined structs, functions, and abstract types.
+
+Each system node may contain actions, which in turn may contain policies, each requiring specific functions.
+The function cross-references the required functions with the provided `defined_functions` and marks
+them as defined if present.
+
+# Arguments
+- `defined_structs`: A set of tuples `(struct_name::Symbol, struct_type::Symbol)` representing defined structs.
+- `defined_functions`: A set of tuples `(function_name::Symbol, arity::Int, arg_types::Set{Symbol})` representing defined functions.
+- `defined_types`: A set of `Symbol`s representing additional abstract system types.
+
+# Returns
+- `Node`: The root node of the constructed tree.
 """
 function run_linter(path::String)
     files = String[]

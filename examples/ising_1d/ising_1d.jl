@@ -100,7 +100,7 @@ function Arianna.log_proposal_density(action::Flip, ::EnergyBias, parameters, sy
     return parameters.θ * local_energy[action.i] - log(partition)
 end
 
-function Arianna.PolicyGuided.reward(action::Flip, system::Ising1D)
+function Arianna.PolicyGuided.reward(::Flip, ::Ising1D)
     # Reward is the change in energy due to flipping the spin
     return 1.0
 end

@@ -16,5 +16,5 @@ CurrentModule = Arianna
 ## Types and Functions
 
 ```@autodocs
-Modules = [Arianna]
+Modules = [Arianna, Arianna.Linter]
 ```
