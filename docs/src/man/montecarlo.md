@@ -25,6 +25,14 @@ The Metropolis-Hastings (MH) algorithm is one of the most widely used MCMC metho
 and **rejected** with probability $1-\alpha\left(x,x'\right)$.
 Provided that the proposal distribution $Q$ guarantees **ergodicity**, the condition of detailed balance ensures that the MH algorithm eventually samples the desired distribution $P$.
 
+```@raw html
+<h1 align="center">
+  <img src="https://raw.githubusercontent.com/TheDisorderedOrganization/Arianna.jl/main/docs/src/assets/metropolishastings.png" width="500"/>
+</h1>
+
+<p align="center"> Schematic representation of the Metropolis-Hastings algorithm. </p>
+```
+
 ## Implementation in Arianna
 
 In Arianna, the Metropolis-Hastings algorithm is implemented through the `Metropolis` struct, which requires:
