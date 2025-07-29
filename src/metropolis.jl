@@ -168,6 +168,61 @@ function Move(action, policy, parameters, weight)
 end
 
 """
+    abstract type AriannaRule
+
+Abstract type representing acceptance rules for Monte Carlo algorithms.
+"""
+abstract type AriannaRule end
+
+
+"""
+    MetropolisRule <: AriannaRule
+
+Acceptance rule for the classical Metropolis Monte Carlo algorithm.
+Accepts a proposal with probability min(1, exp(log_acceptance_ratio)).
+"""
+struct MetropolisRule <: AriannaRule end
+
+"""
+    BarkerRule <: AriannaRule
+
+Acceptance rule for the Barker Monte Carlo algorithm.
+Accepts a proposal with probability 1 / (1 + exp(-log_acceptance_ratio)).
+"""
+struct BarkerRule  <: AriannaRule end
+
+
+"""
+    acceptance_rule(::MetropolisRule, log_acceptance_ratio)
+
+Compute the acceptance probability according to the Metropolis rule.
+
+# Arguments
+- `log_acceptance_ratio`: The logarithm of the acceptance ratio
+
+# Returns
+- Acceptance probability (between 0 and 1)
+"""
+function acceptance_rule(::MetropolisRule, log_acceptance_ratio::T) where {T<:AbstractFloat}
+    return min(one(T), exp(log_acceptance_ratio))
+end
+
+"""
+    acceptance_rule(::BarkerRule, log_acceptance_ratio)
+
+Compute the acceptance probability according to the Barker rule.
+
+# Arguments
+- `log_acceptance_ratio`: The logarithm of the acceptance ratio
+
+# Returns
+- Acceptance probability (between 0 and 1)
+"""
+function acceptance_rule(::BarkerRule, log_acceptance_ratio::T) where {T<:AbstractFloat}
+    return one(T) / (one(T) + exp(-log_acceptance_ratio))
+end
+
+"""
     mc_step!(system::AriannaSystem, action::Action, policy::Policy, parameters::AbstractArray{T}, rng) where {T<:AbstractFloat}
 
 Perform a single Monte Carlo step.
@@ -178,15 +233,18 @@ Perform a single Monte Carlo step.
 - `policy`: Policy used for proposal
 - `parameters`: Parameters of the policy
 - `rng`: Random number generator
+# Keyword Arguments
+- `rule`: Acceptance rule used for the algorithm (default: `MetropolisRule()`)
 """
-function mc_step!(system::AriannaSystem, action::Action, policy::Policy, parameters::AbstractArray{T}, rng) where {T<:AbstractFloat}
+function mc_step!(system::AriannaSystem, action::Action, policy::Policy, parameters::AbstractArray{T}, rng; rule::AriannaRule=MetropolisRule()) where {T<:AbstractFloat}
     sample_action!(action, policy, parameters, system, rng)
     logq_forward = log_proposal_density(action, policy, parameters, system)
     x₁, x₂ = perform_action!(system, action)
     Δlogp = delta_log_target_density(x₁, x₂, system)
     invert_action!(action, system)
     logq_backward = log_proposal_density(action, policy, parameters, system)
-    α = min(one(T), exp(Δlogp + logq_backward - logq_forward))
+    log_acceptance_ratio = Δlogp + logq_backward - logq_forward
+    α = acceptance_rule(rule, log_acceptance_ratio)
     if α > rand(rng)
         return 1
     else
@@ -204,14 +262,16 @@ Perform a Monte Carlo sweep over a pool of moves.
 - `system`: System to modify
 - `pool`: Pool of moves to perform sweeps over
 - `rng`: Random number generator
+# Keyword Arguments
 - `mc_steps`: Number of Monte Carlo steps per sweep
+- `rule`: Acceptance rule used for the algorithm
 """
-function mc_sweep!(system::AriannaSystem, pool, rng; mc_steps=1)
+function mc_sweep!(system::AriannaSystem, pool, rng; mc_steps=1, rule::AriannaRule=MetropolisRule())
     weights = [move.weight for move in pool]
     for _ in 1:mc_steps
         id = rand(rng, Categorical(weights))
         move = pool[id]
-        move.accepted_calls += mc_step!(system, move.action, move.policy, move.parameters, rng)
+        move.accepted_calls += mc_step!(system, move.action, move.policy, move.parameters, rng; rule=rule)
         move.total_calls += 1
     end
     return nothing
@@ -229,28 +289,31 @@ A struct representing a Metropolis Monte Carlo algorithm.
 - `rngs::Vector{R}`: Vector of random number generators
 - `parallel::Bool`: Flag to parallelise over different threads
 - `collecter::C`: Transducer to collect results from parallelised loops
+- `rule::Ru`: Acceptance rule used for the algorithm
 
 # Type Parameters
 - `P`: Type of the pool
 - `R`: Type of the random number generator
 - `C`: Type of the transducer
+- 'Ru`: Type of the Arianna rule used for acceptance
 """
-struct Metropolis{P,R<:AbstractRNG,C<:Function} <: AriannaAlgorithm
+struct Metropolis{P,R<:AbstractRNG,C<:Function, Ru<:AriannaRule} <: AriannaAlgorithm
     pools::Vector{P}            # Vector of independent pools (one for each system)
     sweepstep::Int              # Number of mc steps per mc sweep
     seed::Int                   # Random number seed
     rngs::Vector{R}             # Vector of random number generators
     parallel::Bool              # Flag to parallelise over different threads
     collecter::C                # Transducer to collect results from parallelised loops
-
+    rule::Ru
     function Metropolis(
         chains::Vector{S},
         pools::Vector{P};
         sweepstep::Int=1,
         seed::Int=1,
         R::DataType=Xoshiro,
-        parallel::Bool=false
-    ) where {S<:AriannaSystem,P}
+        parallel::Bool=false,
+        rule::Ru=MetropolisRule()
+    ) where {S<:AriannaSystem,P, Ru<:AriannaRule}
         # Safety checks
         @assert length(chains) == length(pools)
         @assert all(k -> all(move -> move.parameters == getindex.(pools, k)[1].parameters, getindex.(pools, k)), eachindex(pools[1]))
@@ -270,7 +333,7 @@ struct Metropolis{P,R<:AbstractRNG,C<:Function} <: AriannaAlgorithm
         rngs = [R(s) for s in seeds]
         # Handle parallelism
         collecter = parallel ? Transducers.tcollect : collect
-        return new{P,R,typeof(collecter)}(pools, sweepstep, seed, rngs, parallel, collecter)
+        return new{P,R,typeof(collecter), Ru}(pools, sweepstep, seed, rngs, parallel, collecter, rule)
     end
 
 end
@@ -292,9 +355,9 @@ Create a new Metropolis instance.
 # Returns
 - `algorithm`: Metropolis instance
 """
-function Metropolis(chains; pool=missing, sweepstep=length(chains[1]), seed=1, R=Xoshiro, parallel=false, extras...)
+function Metropolis(chains; pool=missing, sweepstep=length(chains[1]), seed=1, R=Xoshiro, parallel=false, rule=MetropolisRule(), extras...)
     pools = [deepcopy(pool) for _ in chains]
-    return Metropolis(chains, pools; sweepstep=sweepstep, seed=seed, R=R, parallel=parallel)
+    return Metropolis(chains, pools; sweepstep=sweepstep, seed=seed, R=R, parallel=parallel, rule=rule)
 end
 
 """
@@ -309,7 +372,7 @@ Perform a single step of the Metropolis algorithm.
 function make_step!(simulation::Simulation, algorithm::Metropolis)
     algorithm.collecter(
         eachindex(simulation.chains) |> Map(c -> begin
-            mc_sweep!(simulation.chains[c], algorithm.pools[c], algorithm.rngs[c]; mc_steps=algorithm.sweepstep)
+            mc_sweep!(simulation.chains[c], algorithm.pools[c], algorithm.rngs[c]; mc_steps=algorithm.sweepstep, algorithm.rule)
         end)
     )
     return nothing
