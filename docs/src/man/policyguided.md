@@ -54,4 +54,4 @@ algorithm_list = (
 simulation = Simulation(chains, algorithm_list, steps; path=path, verbose=true)
 run!(simulation)
 ```
-In this example, PGMC optimises the standard deviation `σ` of the Gaussian-distributed displacements using the `VPG` optimiser with a learing rate of `0.001`. Note that `PolicyGradientUpdate` is called every two calls of `PolicyGradientEstimator` to accumulate more samples for gradient estimation before each update.
+In this example, PGMC optimises the standard deviation `σ` of the Gaussian-distributed displacements using the `VPG` optimiser with a learning rate of `0.001`. Note that `PolicyGradientUpdate` is called every two calls of `PolicyGradientEstimator` to accumulate more samples for gradient estimation before each update.
