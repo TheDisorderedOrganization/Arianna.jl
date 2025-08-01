@@ -55,3 +55,11 @@ simulation = Simulation(chains, algorithm_list, steps; path=path, verbose=true)
 run!(simulation)
 ```
 In this example, PGMC optimises the standard deviation `σ` of the Gaussian-distributed displacements using the `VPG` optimiser with a learning rate of `0.001`. Note that `PolicyGradientUpdate` is called every two calls of `PolicyGradientEstimator` to accumulate more samples for gradient estimation before each update.
+
+```@raw html
+<h1 align="center">
+  <img src="https://raw.githubusercontent.com/TheDisorderedOrganization/Arianna.jl/main/docs/src/assets/learning.png" width="400"/>
+</h1>
+
+<p align="center"> Schematic representation of the Metropolis-Hastings algorithm. </p>
+```
