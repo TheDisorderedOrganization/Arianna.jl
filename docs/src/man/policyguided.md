@@ -56,10 +56,11 @@ run!(simulation)
 ```
 In this example, PGMC optimises the standard deviation `σ` of the Gaussian-distributed displacements using the `VPG` optimiser with a learning rate of `0.001`. Note that `PolicyGradientUpdate` is called every two calls of `PolicyGradientEstimator` to accumulate more samples for gradient estimation before each update.
 
+We run the above simulation, and find that the optimal standard deviation `σ` is approximately equal to `1.2` as represented in the following figure: 
 ```@raw html
 <h1 align="center">
   <img src="https://raw.githubusercontent.com/TheDisorderedOrganization/Arianna.jl/main/docs/src/assets/learning.png" width="400"/>
 </h1>
 
-<p align="center"> Schematic representation of the Metropolis-Hastings algorithm. </p>
+<p align="center"> Standard deviation in function of time in a PGMC simulation. </p>
 ```
