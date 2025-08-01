@@ -17,8 +17,8 @@ pool = (
 ) 
 optimisers = (Static(), VPG(0.001))
 steps = 10^5
-burn = 1000
-block = [0, 10]
+burn = 0
+block = [0, 1, 10]
 sampletimes = build_schedule(steps, burn, block)
 path = "data/PGMC/particle_1d/Harmonic/beta$β/M$M/seed$seed"
 algorithm_list = (
@@ -36,7 +36,7 @@ run!(simulation)
 
 ## PLOT RESULTS
 using Plots, Statistics, Measures, DelimitedFiles
-default(tickfontsize=15, guidefontsize=15, titlefontsize=15, legendfontsize=15,
+default(tickfontsize=15, guidefontsize=20, titlefontsize=15, legendfontsize=15,
     grid=false, size=(500, 500), minorticks=5)
 
 energies = readdlm(joinpath(path, "energy.dat"))[:, 2]
@@ -47,5 +47,8 @@ steps_data = parse.(Int, getindex.(split.(prms_data, " "), 1))
 time_steps = steps_data .- steps_data[1]
 prms = parse.(Float64, replace.(getindex.(split.(prms_data, " "), 2), r"\[|\]" => ""))
 plot(xlabel="t", ylabel="σ(t)", xscale=:log10, legend=false, title="β=$β, M=$M, η=$(optimisers[2].η)")
+plot!(framestyle=:box, fg_legend=:transparent, dpi=300, bottommargin=-1mm, leftmargin=0mm, rightmargin=3mm)
+plot!(xlim=(1e0, 1e5), ylim=(0, 1.5))
 plot!(time_steps[2:end], prms[2:end], lw=2)
+
 savefig("examples/particle_1d/harmonic_oscillator/learning.png")

@@ -31,7 +31,7 @@ run!(simulation)
 
 ## PLOT RESULTS
 using Plots, Statistics, Measures, DelimitedFiles
-default(tickfontsize=15, guidefontsize=15, titlefontsize=15, legendfontsize=15,
+default(tickfontsize=15, guidefontsize=20, titlefontsize=15, legendfontsize=15,
     grid=false, size=(500, 500), minorticks=5)
 
 energies = readdlm(joinpath(path, "energy.dat"))[:, 2]
@@ -40,7 +40,7 @@ energies = readdlm(joinpath(path, "energy.dat"))[:, 2]
 target_density(x, β) = exp(-β * x^2) * sqrt(β / pi)
 xx = LinRange(-2.0, 2.0, 1000)
 target = target_density.(xx, β)
-plot(xlabel="x", ylabel="p(x)", title="β=$β, M=$M", legend=:bottomright)
+plot(xlabel="x", ylabel="p(x)", title="β=$β, M=$M", legend=:bottomright, dpi=300)
 plot!(xx, target, lw=3, label="Target density", c=:red)
 
 trj_files = [joinpath(dir, "trajectory.dat") for dir in readdir(joinpath(path, "trajectories"), join=true)]
@@ -48,6 +48,7 @@ trajectories = map(file -> readdlm(file)[:, 2], trj_files)
 positions = vcat(trajectories...)
 
 stephist!(positions, normalize=:pdf, lw=3, label="Simulation", c=1)
+plot!(legend=:topright, legendfontsize=12, xlim=(-2, 2), ylim=(0, 1), framestyle=:box, fg_legend=:transparent)
 savefig("examples/particle_1d/harmonic_oscillator/density.png")
 
 
