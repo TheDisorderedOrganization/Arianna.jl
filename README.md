@@ -82,7 +82,7 @@ If you use Arianna in your research, please cite it! You can find the citation i
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0.  License. See the [LICENSE](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/TheDisorderedOrganization/Arianna.jl/blob/main/LICENSE) file for details.
 
 ## Contact
 
