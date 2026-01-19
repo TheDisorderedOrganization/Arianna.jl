@@ -37,7 +37,7 @@ export Action, Policy, Move, MetropolisRule, BarkerRule
 export sample_action!, perform_action!, revert_action!, invert_action!
 export log_proposal_density, delta_log_target_density
 export mc_step!, mc_sweep!
-export Metropolis, callback_acceptance, StoreParameters
+export Metropolis, StoreParameters, StoreAcceptance
 
 include("PolicyGuided/PolicyGuided.jl")
 include("Linter/Linter.jl")

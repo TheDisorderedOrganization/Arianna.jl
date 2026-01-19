@@ -189,7 +189,7 @@ struct MetropolisRule <: AriannaRule end
 Acceptance rule for the Barker Monte Carlo algorithm.
 Accepts a proposal with probability 1 / (1 + exp(-log_acceptance_ratio)).
 """
-struct BarkerRule  <: AriannaRule end
+struct BarkerRule <: AriannaRule end
 
 
 """
@@ -297,7 +297,7 @@ A struct representing a Metropolis Monte Carlo algorithm.
 - `C`: Type of the transducer
 - 'Ru`: Type of the Arianna rule used for acceptance
 """
-struct Metropolis{P,R<:AbstractRNG,C<:Function, Ru<:AriannaRule} <: AriannaAlgorithm
+struct Metropolis{P,R<:AbstractRNG,C<:Function,Ru<:AriannaRule} <: AriannaAlgorithm
     pools::Vector{P}            # Vector of independent pools (one for each system)
     sweepstep::Int              # Number of mc steps per mc sweep
     seed::Int                   # Random number seed
@@ -313,7 +313,7 @@ struct Metropolis{P,R<:AbstractRNG,C<:Function, Ru<:AriannaRule} <: AriannaAlgor
         R::DataType=Xoshiro,
         parallel::Bool=false,
         rule::Ru=MetropolisRule()
-    ) where {S<:AriannaSystem,P, Ru<:AriannaRule}
+    ) where {S<:AriannaSystem,P,Ru<:AriannaRule}
         # Safety checks
         @assert length(chains) == length(pools)
         @assert all(k -> all(move -> move.parameters == getindex.(pools, k)[1].parameters, getindex.(pools, k)), eachindex(pools[1]))
@@ -333,7 +333,7 @@ struct Metropolis{P,R<:AbstractRNG,C<:Function, Ru<:AriannaRule} <: AriannaAlgor
         rngs = [R(s) for s in seeds]
         # Handle parallelism
         collecter = parallel ? Transducers.tcollect : collect
-        return new{P,R,typeof(collecter), Ru}(pools, sweepstep, seed, rngs, parallel, collecter, rule)
+        return new{P,R,typeof(collecter),Ru}(pools, sweepstep, seed, rngs, parallel, collecter, rule)
     end
 
 end
@@ -378,17 +378,6 @@ function make_step!(simulation::Simulation, algorithm::Metropolis)
     return nothing
 end
 
-"""
-    callback_acceptance(simulation)
-
-Calculate the mean acceptance rate of the Metropolis algorithm.
-
-# Arguments
-- `simulation`: Simulation to calculate the acceptance rate of
-"""
-function callback_acceptance(simulation)
-    return mean([[move.accepted_calls / move.total_calls for move in pool] for pool in getproperty.(filter(x -> isa(x, Metropolis), simulation.algorithms), :pools)...])
-end
 
 """
     write_parameters(::Policy, parameters)
@@ -516,6 +505,63 @@ function finalise(algorithm::StoreParameters, simulation::Simulation)
     algorithm.store_last && make_step!(simulation, algorithm)
     simulation.verbose && println("Closing parameter files...")
     close.(algorithm.files)
+    return nothing
+end
+
+
+"""
+    StoreAcceptance <: AriannaAlgorithm
+
+Algorithm to store the moving average acceptance rate of the simulation.
+"""
+struct StoreAcceptance <: AriannaAlgorithm
+    path::String
+    file::Vector{IOStream}
+
+    function StoreAcceptance(path::String)
+        file_path = joinpath(path, "acceptance.dat")
+        return new(file_path, Vector{IOStream}(undef, 1))
+    end
+end
+
+function StoreAcceptance(chains::AbstractVector; path=missing, extras...)
+    return StoreAcceptance(path)
+end
+
+function initialise(algorithm::StoreAcceptance, simulation::Simulation)
+    simulation.verbose && println("Opening acceptance file...")
+    algorithm.file[1] = open(algorithm.path, "w")
+    return nothing
+end
+
+function make_step!(simulation::Simulation, algorithm::StoreAcceptance)
+    metropolis_algos = filter(x -> isa(x, Metropolis), simulation.algorithms)
+    if isempty(metropolis_algos)
+        return
+    end
+
+    acc_rates = Float64[]
+    for algo in metropolis_algos
+        for pool in algo.pools
+            for move in pool
+                if move.total_calls > 0
+                    push!(acc_rates, move.accepted_calls / move.total_calls)
+                else
+                    push!(acc_rates, 0.0)
+                end
+            end
+        end
+    end
+
+    val = isempty(acc_rates) ? 0.0 : mean(acc_rates)
+
+    println(algorithm.file[1], "$(simulation.t) $(val)")
+    flush(algorithm.file[1])
+end
+
+function finalise(algorithm::StoreAcceptance, simulation::Simulation)
+    simulation.verbose && println("Closing acceptance file...")
+    close(algorithm.file[1])
     return nothing
 end
 

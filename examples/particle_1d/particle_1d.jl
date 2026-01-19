@@ -67,7 +67,7 @@ function Arianna.log_proposal_density(::Displacement, ::StandardUniform, paramet
 end
 
 function Arianna.sample_action!(action::Displacement, ::StandardUniform, parameters, ::Particle, rng)
-    action.δ = rand(rng) * parameters.l - parameters.l/2
+    action.δ = rand(rng) * parameters.l - parameters.l / 2
     return nothing
 end
 
@@ -80,6 +80,6 @@ function Arianna.store_trajectory(io, system::Particle, t::Int, format::DAT)
     return nothing
 end
 
-function callback_energy(simulation)
-    return mean(system.e for system in simulation.chains)
+function callback_energy(system)
+    return system.e
 end

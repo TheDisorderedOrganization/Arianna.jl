@@ -9,28 +9,29 @@ seed = 42
 rng = Xoshiro(seed)
 β = 1.0
 M = 1
-j= 0.1
+j = 0.1
 h = 0.1
-N=100
+N = 100
 chains = [Ising1D(N, j, h, β) for _ in 1:M]
 
-pool = (Move(Flip(1), EnergyBias(), ComponentArray(θ=1.0), 1.0), )
+pool = (Move(Flip(1), EnergyBias(), ComponentArray(θ=1.0), 1.0),)
 steps = 10^4
 burn = 0
 block = [0, steps ÷ 100]
 sampletimes = build_schedule(steps, burn, block)
 path = "data/PGMC/ising_1d/beta$(β)J$(j)H$(h)/"
-optimisers = (VPG(1e-3), )
+optimisers = (VPG(1e-3),)
 
 algorithm_list = (
     (algorithm=Metropolis, pool=pool, seed=seed, parallel=false),
     (algorithm=PolicyGradientEstimator, dependencies=(Metropolis,), optimisers=optimisers, q_batch_size=10, parallel=true),
     (algorithm=PolicyGradientUpdate, dependencies=(PolicyGradientEstimator,), scheduler=build_schedule(steps, burn, 2)),
-    (algorithm=StoreCallbacks, callbacks=(callback_energy, callback_acceptance), scheduler=sampletimes),
+    (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
+    (algorithm=StoreAcceptance, scheduler=sampletimes),
     (algorithm=StoreParameters, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=PrintTimeSteps, scheduler=build_schedule(steps, burn, steps ÷ 10)),
-) 
+)
 simulation = Simulation(chains, algorithm_list, steps; path=path, verbose=true)
 run!(simulation)
 

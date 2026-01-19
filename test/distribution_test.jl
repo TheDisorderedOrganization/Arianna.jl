@@ -20,7 +20,8 @@ potential(x) = x^2
         path = "data/MC/particle_1d/Harmonic/beta$β/M$M/seed$seed"
         algorithm_list = (
             (algorithm=Metropolis, pool=pool, seed=seed, parallel=false),
-            (algorithm=StoreCallbacks, callbacks=(callback_energy, callback_acceptance), scheduler=sampletimes),
+            (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
+            (algorithm=StoreAcceptance, scheduler=sampletimes),
             (algorithm=StoreTrajectories, scheduler=sampletimes),
             (algorithm=StoreBackups, scheduler=build_schedule(steps, burn, steps ÷ 10), store_first=true, store_last=true),
             (algorithm=StoreLastFrames, scheduler=[steps]),

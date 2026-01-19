@@ -33,7 +33,8 @@ potential(x) = x^2
         (algorithm=Metropolis, pool=pool, seed=seed, parallel=false),
         (algorithm=PolicyGradientEstimator, dependencies=(Metropolis,), optimisers=optimisers, q_batch_size=10, parallel=true),
         (algorithm=PolicyGradientUpdate, dependencies=(PolicyGradientEstimator,), scheduler=build_schedule(steps, burn, 2)),
-        (algorithm=StoreCallbacks, callbacks=(callback_energy, callback_acceptance), scheduler=sampletimes),
+        (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
+        (algorithm=StoreAcceptance, scheduler=sampletimes),
         (algorithm=StoreTrajectories, scheduler=sampletimes),
         (algorithm=StoreParameters, dependencies=(Metropolis,), scheduler=sampletimes),
         (algorithm=StoreLastFrames, scheduler=[steps]),
@@ -41,7 +42,7 @@ potential(x) = x^2
     )
     simulation = Simulation(chains, algorithm_list, steps; path=path, verbose=true)
     run!(simulation)
-    energies = readdlm(joinpath(path, "energy.dat"))[:, 2]
+    energies = reduce(vcat, [readdlm(joinpath(path, "chains", "$k", "energy.dat"))[:, 2] for k in 1:M])
     @test isapprox(mean(energies), 0.25, atol=5e-2)
     prms_path = joinpath(path, "parameters")
     for (opt, dir) in zip(optimisers, readdir(prms_path))
