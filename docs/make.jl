@@ -9,16 +9,17 @@ readme = "```@raw html\n" * html_part * "\n```\n" * md_part
 write(joinpath(@__DIR__, "src", "index.md"), readme)
 
 makedocs(
-    sitename = "Arianna",
-    format = Documenter.HTML(;
-        prettyurls = get(ENV, "CI", nothing) == "true",
-        size_threshold_ignore = ["api.md"],
-        sidebar_sitename = false
+    sitename="Arianna",
+    format=Documenter.HTML(;
+        prettyurls=get(ENV, "CI", nothing) == "true",
+        size_threshold_ignore=["api.md"],
+        sidebar_sitename=false
     ),
-    modules = [Arianna],
-    warnonly = [:missing_docs],
-    pages = [
+    modules=[Arianna],
+    warnonly=[:missing_docs],
+    pages=[
         "Home" => "index.md",
+        "Design strategy" => "design.md",
         "Manual" => Any[
             "man/montecarlo.md",
             "man/system.md",
@@ -31,5 +32,5 @@ makedocs(
 
 # Deploying to GitHub Pages
 deploydocs(;
-    repo = "github.com/TheDisorderedOrganization/Arianna.jl.git",
+    repo="github.com/TheDisorderedOrganization/Arianna.jl.git",
 )
