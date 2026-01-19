@@ -26,7 +26,7 @@ algorithm_list = (
     (algorithm=PolicyGradientEstimator, dependencies=(Metropolis,), optimisers=optimisers, parallel=false),
     (algorithm=PolicyGradientUpdate, dependencies=(PolicyGradientEstimator,)),
     (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
-    (algorithm=StoreAcceptance, scheduler=sampletimes),
+    (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=StoreParameters, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreLastFrames, scheduler=[steps]),
@@ -43,7 +43,7 @@ default(tickfontsize=15, guidefontsize=20, titlefontsize=15, legendfontsize=15,
 energies = reduce(vcat, [readdlm(joinpath(path, "chains", "$k", "energy.dat"))[:, 2] for k in 1:M])
 @show mean(energies), std(energies)
 
-prms_data = readlines(joinpath(path, "parameters", "2", "parameters.dat"))
+prms_data = readlines(joinpath(path, "moves", "2", "parameters.dat"))
 steps_data = parse.(Int, getindex.(split.(prms_data, " "), 1))
 time_steps = steps_data .- steps_data[1]
 prms = parse.(Float64, replace.(getindex.(split.(prms_data, " "), 2), r"\[|\]" => ""))

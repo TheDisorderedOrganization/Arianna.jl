@@ -27,7 +27,7 @@ algorithm_list = (
     (algorithm=PolicyGradientEstimator, dependencies=(Metropolis,), optimisers=optimisers, q_batch_size=10, parallel=true),
     (algorithm=PolicyGradientUpdate, dependencies=(PolicyGradientEstimator,), scheduler=build_schedule(steps, burn, 2)),
     (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
-    (algorithm=StoreAcceptance, scheduler=sampletimes),
+    (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreParameters, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=PrintTimeSteps, scheduler=build_schedule(steps, burn, steps ÷ 10)),
@@ -40,7 +40,7 @@ using Plots, Statistics, Measures, DelimitedFiles
 default(tickfontsize=15, guidefontsize=15, titlefontsize=15, legendfontsize=15,
     grid=false, size=(500, 500), minorticks=5)
 
-prms_data = readlines(joinpath(path, "parameters", "1", "parameters.dat"))
+prms_data = readlines(joinpath(path, "moves", "1", "parameters.dat"))
 steps_data = parse.(Int, getindex.(split.(prms_data, " "), 1))
 time_steps = steps_data .- steps_data[1]
 prms = parse.(Float64, replace.(getindex.(split.(prms_data, " "), 2), r"\[|\]" => ""))

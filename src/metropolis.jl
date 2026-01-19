@@ -445,7 +445,7 @@ struct StoreParameters{V<:AbstractArray} <: AriannaAlgorithm
 
     function StoreParameters(pool, path; ids=collect(eachindex(pool)), store_first::Bool=true, store_last::Bool=false)
         parameters_list = [move.parameters for move in pool[ids]]
-        dirs = joinpath.(path, "parameters", ["$(k)" for k in ids])
+        dirs = joinpath.(path, "moves", ["$(k)" for k in ids])
         mkpath.(dirs)
         paths = joinpath.(dirs, "parameters.dat")
         files = Vector{IOStream}(undef, length(paths))
@@ -515,22 +515,37 @@ end
 Algorithm to store the moving average acceptance rate of the simulation.
 """
 struct StoreAcceptance <: AriannaAlgorithm
-    path::String
-    file::Vector{IOStream}
+    paths::Vector{String}
+    files::Vector{IOStream}
+    ids::Vector{Int}
 
-    function StoreAcceptance(path::String)
-        file_path = joinpath(path, "acceptance.dat")
-        return new(file_path, Vector{IOStream}(undef, 1))
+    function StoreAcceptance(path::String, ids::AbstractVector)
+        dirs = joinpath.(path, "moves", ["$(k)" for k in ids])
+        mkpath.(dirs)
+        paths = joinpath.(dirs, "acceptance.dat")
+        files = Vector{IOStream}(undef, length(paths))
+        try
+            files = open.(paths, "w")
+        finally
+            close.(files)
+        end
+        return new(paths, files, ids)
     end
 end
 
-function StoreAcceptance(chains::AbstractVector; path=missing, extras...)
-    return StoreAcceptance(path)
+function StoreAcceptance(chains::AbstractVector; dependencies=missing, path=missing, ids=missing, extras...)
+    @assert length(dependencies) == 1
+    @assert isa(dependencies[1], Metropolis)
+    pool = dependencies[1].pools[1]
+    if ismissing(ids)
+        ids = collect(eachindex(pool))
+    end
+    return StoreAcceptance(path, ids)
 end
 
 function initialise(algorithm::StoreAcceptance, simulation::Simulation)
-    simulation.verbose && println("Opening acceptance file...")
-    algorithm.file[1] = open(algorithm.path, "w")
+    simulation.verbose && println("Opening acceptance files...")
+    algorithm.files .= open.(algorithm.paths, "w")
     return nothing
 end
 
@@ -556,17 +571,15 @@ function make_step!(simulation::Simulation, algorithm::StoreAcceptance)
 
     avg_rates = mean(pool_rates)
 
-    print(algorithm.file[1], "$(simulation.t)")
-    for val in avg_rates
-        print(algorithm.file[1], " $val")
+    for (k, id) in enumerate(algorithm.ids)
+        println(algorithm.files[k], "$(simulation.t) $(avg_rates[id])")
+        flush(algorithm.files[k])
     end
-    println(algorithm.file[1])
-    flush(algorithm.file[1])
 end
 
 function finalise(algorithm::StoreAcceptance, simulation::Simulation)
-    simulation.verbose && println("Closing acceptance file...")
-    close(algorithm.file[1])
+    simulation.verbose && println("Closing acceptance files...")
+    close.(algorithm.files)
     return nothing
 end
 

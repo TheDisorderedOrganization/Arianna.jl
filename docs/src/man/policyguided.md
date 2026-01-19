@@ -47,7 +47,7 @@ algorithm_list = (
     (algorithm=PolicyGradientEstimator, dependencies=(Metropolis,), optimisers=optimisers, parallel=false),
     (algorithm=PolicyGradientUpdate, dependencies=(PolicyGradientEstimator,), scheduler=build_schedule(steps, burn, 2)),
     (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
-    (algorithm=StoreAcceptance, scheduler=sampletimes),
+    (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=StoreParameters, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=PrintTimeSteps, scheduler=build_schedule(steps, burn, steps ÷ 10)),

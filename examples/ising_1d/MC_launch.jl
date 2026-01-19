@@ -18,12 +18,12 @@ steps = 2 * 10^6
 burn = 10^6
 block = [0, 10^2]
 sampletimes = build_schedule(steps, burn, block)
-path = "examples/data/MC/ising_1d/beta$(β)J$(j)H$(h)/"
+path = "data/MC/ising_1d/beta$(β)J$(j)H$(h)/"
 
 algorithm_list = (
     (algorithm=Metropolis, pool=pool, seed=seed, parallel=false, rule=BarkerRule()),
     (algorithm=StoreCallbacks, callbacks=(callback_energy,), store_first=false, scheduler=sampletimes),
-    (algorithm=StoreAcceptance, scheduler=sampletimes),
+    (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=PrintTimeSteps, scheduler=build_schedule(steps, burn, steps ÷ 10)),
 )
@@ -43,7 +43,7 @@ stephist!(energies, normalize=:pdf, lw=3, c=1, label="Barker rule")
 algorithm_list = (
     (algorithm=Metropolis, pool=pool, seed=seed, parallel=false, rule=MetropolisRule()),
     (algorithm=StoreCallbacks, callbacks=(callback_energy,), store_first=false, scheduler=sampletimes),
-    (algorithm=StoreAcceptance, scheduler=sampletimes),
+    (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=PrintTimeSteps, scheduler=build_schedule(steps, burn, steps ÷ 10)),
 )
