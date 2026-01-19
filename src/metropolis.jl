@@ -540,22 +540,27 @@ function make_step!(simulation::Simulation, algorithm::StoreAcceptance)
         return
     end
 
-    acc_rates = Float64[]
+    all_pools = []
     for algo in metropolis_algos
-        for pool in algo.pools
-            for move in pool
-                if move.total_calls > 0
-                    push!(acc_rates, move.accepted_calls / move.total_calls)
-                else
-                    push!(acc_rates, 0.0)
-                end
-            end
-        end
+        append!(all_pools, algo.pools)
     end
 
-    val = isempty(acc_rates) ? 0.0 : mean(acc_rates)
+    if isempty(all_pools)
+        return
+    end
 
-    println(algorithm.file[1], "$(simulation.t) $(val)")
+    pool_rates = [
+        [move.total_calls > 0 ? move.accepted_calls / move.total_calls : 0.0 for move in pool]
+        for pool in all_pools
+    ]
+
+    avg_rates = mean(pool_rates)
+
+    print(algorithm.file[1], "$(simulation.t)")
+    for val in avg_rates
+        print(algorithm.file[1], " $val")
+    end
+    println(algorithm.file[1])
     flush(algorithm.file[1])
 end
 
