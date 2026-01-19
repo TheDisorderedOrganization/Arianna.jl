@@ -26,6 +26,7 @@ algorithm_list = (
     (algorithm=PolicyGradientEstimator, dependencies=(Metropolis,), optimisers=optimisers, parallel=false),
     (algorithm=PolicyGradientUpdate, dependencies=(PolicyGradientEstimator,)),
     (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
+    (algorithm=StoreObjective, dependencies=(PolicyGradientEstimator,), scheduler=sampletimes),
     (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=StoreParameters, dependencies=(Metropolis,), scheduler=sampletimes),
