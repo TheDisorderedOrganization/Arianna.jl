@@ -38,6 +38,26 @@ function write_algorithm(io, algorithm::AriannaAlgorithm, scheduler)
 end
 
 """
+    callback_name(f)
+
+Return the name of the callback function `f`. Defaults to `nothing`.
+"""
+callback_name(f) = nothing
+
+"""
+    @callback
+
+Macro to mark a function as a callback.
+"""
+macro callback(func)
+    name = func.args[1].args[1]
+    return esc(quote
+        $(func)
+        Arianna.callback_name(::typeof($(name))) = $(string(name))
+    end)
+end
+
+"""
     StoreCallbacks{V} <: AriannaAlgorithm
 
 Algorithm to store callback values during simulation.
@@ -71,7 +91,14 @@ struct StoreCallbacks{V} <: AriannaAlgorithm
         dirs = joinpath.(path, "chains", ["$(c)" for c in eachindex(chains)])
         mkpath.(dirs)
 
-        cb_names = [replace(string(cb), "callback_" => "") * ".dat" for cb in callbacks]
+        cb_names = String[]
+        for cb in callbacks
+            name = callback_name(cb)
+            if isnothing(name)
+                name = replace(string(cb), "callback_" => "")
+            end
+            push!(cb_names, name * ".dat")
+        end
 
         paths = Vector{Vector{String}}(undef, length(chains))
         files = Vector{Vector{IOStream}}(undef, length(chains))
@@ -121,8 +148,8 @@ end
 function finalise(algorithm::StoreCallbacks, simulation::Simulation)
     algorithm.store_last && make_step!(simulation, algorithm)
     simulation.verbose && println("Closing callback files...")
-    for c in eachindex(algorithm.files)
-        close.(algorithm.files[c])
+    for files in algorithm.files
+        close.(files)
     end
     return nothing
 end

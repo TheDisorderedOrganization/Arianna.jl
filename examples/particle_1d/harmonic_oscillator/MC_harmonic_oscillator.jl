@@ -20,7 +20,7 @@ path = "data/MC/particle_1d/Harmonic/beta$β/M$M/seed$seed"
 
 algorithm_list = (
     (algorithm=Metropolis, pool=pool, seed=seed, parallel=false),
-    (algorithm=StoreCallbacks, callbacks=(callback_energy,), scheduler=sampletimes),
+    (algorithm=StoreCallbacks, callbacks=(energy,), scheduler=sampletimes),
     (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
     (algorithm=StoreTrajectories, scheduler=sampletimes),
     (algorithm=StoreBackups, scheduler=build_schedule(steps, burn, steps ÷ 10), store_first=true, store_last=true),
