@@ -80,6 +80,6 @@ function Arianna.store_trajectory(io, system::Particle, t::Int, format::DAT)
     return nothing
 end
 
-@callback function energy(system)
+Arianna.@callback function energy(system)
     return system.e
 end

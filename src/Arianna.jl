@@ -31,7 +31,6 @@ export Simulation, build_schedule, run!
 include("algorithms.jl")
 export AriannaAlgorithm, StoreCallbacks, StoreTrajectories, StoreLastFrames, StoreBackups, PrintTimeSteps
 export TXT, DAT
-export @callback
 
 include("metropolis.jl")
 export Action, Policy, Move, MetropolisRule, BarkerRule

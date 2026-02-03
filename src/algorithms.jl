@@ -95,7 +95,7 @@ struct StoreCallbacks{V} <: AriannaAlgorithm
         for cb in callbacks
             name = callback_name(cb)
             if isnothing(name)
-                name = replace(string(cb), "callback_" => "")
+                error("Callback function $(string(cb)) must be defined with Arianna.@callback")
             end
             push!(cb_names, name * ".dat")
         end

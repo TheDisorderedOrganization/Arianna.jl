@@ -113,7 +113,7 @@ function Arianna.store_trajectory(io, system::Ising1D, t::Int, ::DAT)
     return nothing
 end
 
-function callback_energy(system)
+Arianna.@callback function energy(system)
     return system.e
 end
 
