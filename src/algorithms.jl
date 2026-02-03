@@ -38,6 +38,26 @@ function write_algorithm(io, algorithm::AriannaAlgorithm, scheduler)
 end
 
 """
+    callback_name(f)
+
+Return the name of the callback function `f`. Defaults to `nothing`.
+"""
+callback_name(f) = nothing
+
+"""
+    @callback
+
+Macro to mark a function as a callback.
+"""
+macro callback(func)
+    name = func.args[1].args[1]
+    return esc(quote
+        $(func)
+        Arianna.callback_name(::typeof($(name))) = $(string(name))
+    end)
+end
+
+"""
     StoreCallbacks{V} <: AriannaAlgorithm
 
 Algorithm to store callback values during simulation.
@@ -62,20 +82,37 @@ Create a new StoreCallbacks instance.
 """
 struct StoreCallbacks{V} <: AriannaAlgorithm
     callbacks::V
-    paths::Vector{String}
-    files::Vector{IOStream}
+    paths::Vector{Vector{String}}
+    files::Vector{Vector{IOStream}}
     store_first::Bool
     store_last::Bool
 
-    function StoreCallbacks(callbacks::V, path; store_first::Bool=true, store_last::Bool=false) where {V}
-        mkpath(path)
-        paths = joinpath.(path, [replace(string(cb), "callback_" => "") * ".dat" for cb in callbacks])
-        files = Vector{IOStream}(undef, length(paths))
-        try
-            files = open.(paths, "w")
-        finally
-            close.(files)
+    function StoreCallbacks(chains, callbacks::V, path; store_first::Bool=true, store_last::Bool=false) where {V}
+        dirs = joinpath.(path, "chains", ["$(c)" for c in eachindex(chains)])
+        mkpath.(dirs)
+
+        cb_names = String[]
+        for cb in callbacks
+            name = callback_name(cb)
+            if isnothing(name)
+                error("Callback function $(string(cb)) must be defined with Arianna.@callback")
+            end
+            push!(cb_names, name * ".dat")
         end
+
+        paths = Vector{Vector{String}}(undef, length(chains))
+        files = Vector{Vector{IOStream}}(undef, length(chains))
+
+        for c in eachindex(chains)
+            paths[c] = joinpath.(dirs[c], cb_names)
+            files[c] = Vector{IOStream}(undef, length(callbacks))
+            try
+                files[c] = open.(paths[c], "w")
+            catch e
+                rethrow(e)
+            end
+        end
+
         return new{V}(callbacks, paths, files, store_first, store_last)
     end
 
@@ -85,27 +122,35 @@ function StoreCallbacks(chains; path=missing, callbacks=missing, store_first=tru
     if ismissing(callbacks)
         callbacks = []
     end
-    return StoreCallbacks(callbacks, path; store_first=store_first, store_last=store_last)
+    return StoreCallbacks(chains, callbacks, path; store_first=store_first, store_last=store_last)
 end
 
 function initialise(algorithm::StoreCallbacks, simulation::Simulation)
     simulation.verbose && println("Opening callback files...")
-    algorithm.files .= open.(algorithm.paths, "w")
+
+    for c in eachindex(algorithm.files)
+        algorithm.files[c] .= open.(algorithm.paths[c], "w")
+    end
     algorithm.store_first && make_step!(simulation, algorithm)
     return nothing
 end
 
 function make_step!(simulation::Simulation, algorithm::StoreCallbacks)
-    for (callback, file) in zip(algorithm.callbacks, algorithm.files)
-        println(file, "$(simulation.t) $(callback(simulation))")
-        flush(file)
+    for c in eachindex(simulation.chains)
+        system = simulation.chains[c]
+        for (i, callback) in enumerate(algorithm.callbacks)
+            println(algorithm.files[c][i], "$(simulation.t) $(callback(system))")
+            flush(algorithm.files[c][i])
+        end
     end
 end
 
 function finalise(algorithm::StoreCallbacks, simulation::Simulation)
     algorithm.store_last && make_step!(simulation, algorithm)
     simulation.verbose && println("Closing callback files...")
-    close.(algorithm.files)
+    for files in algorithm.files
+        close.(files)
+    end
     return nothing
 end
 
@@ -160,7 +205,7 @@ struct StoreTrajectories{F<:Format} <: AriannaAlgorithm
     store_last::Bool
 
     function StoreTrajectories(chains, path, fmt; store_first::Bool=true, store_last::Bool=false)
-        dirs = joinpath.(path, "trajectories", ["$(c)" for c in eachindex(chains)])
+        dirs = joinpath.(path, "chains", ["$(c)" for c in eachindex(chains)])
         mkpath.(dirs)
         ext = fmt.extension
         paths = joinpath.(dirs, "trajectory$(ext)")
@@ -223,7 +268,7 @@ struct StoreLastFrames <: AriannaAlgorithm
     paths::Vector{String}
     fmt::Format
     function StoreLastFrames(chains, path, fmt)
-        dirs = joinpath.(path, "trajectories", ["$(c)" for c in eachindex(chains)])
+        dirs = joinpath.(path, "chains", ["$(c)" for c in eachindex(chains)])
         mkpath.(dirs)
         ext = fmt.extension
         paths = joinpath.(dirs, "lastframe$(ext)")
@@ -268,7 +313,7 @@ struct StoreBackups <: AriannaAlgorithm
     store_first::Bool
     store_last::Bool
     function StoreBackups(chains, path, fmt; store_first::Bool=false, store_last::Bool=false)
-        dirs = joinpath.(path, "trajectories", ["$(c)" for c in eachindex(chains)])
+        dirs = joinpath.(path, "chains", ["$(c)" for c in eachindex(chains)])
         mkpath.(dirs)
         return new(dirs, fmt, store_first, store_last)
     end

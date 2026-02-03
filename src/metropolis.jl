@@ -189,7 +189,7 @@ struct MetropolisRule <: AriannaRule end
 Acceptance rule for the Barker Monte Carlo algorithm.
 Accepts a proposal with probability 1 / (1 + exp(-log_acceptance_ratio)).
 """
-struct BarkerRule  <: AriannaRule end
+struct BarkerRule <: AriannaRule end
 
 
 """
@@ -297,7 +297,7 @@ A struct representing a Metropolis Monte Carlo algorithm.
 - `C`: Type of the transducer
 - 'Ru`: Type of the Arianna rule used for acceptance
 """
-struct Metropolis{P,R<:AbstractRNG,C<:Function, Ru<:AriannaRule} <: AriannaAlgorithm
+struct Metropolis{P,R<:AbstractRNG,C<:Function,Ru<:AriannaRule} <: AriannaAlgorithm
     pools::Vector{P}            # Vector of independent pools (one for each system)
     sweepstep::Int              # Number of mc steps per mc sweep
     seed::Int                   # Random number seed
@@ -313,7 +313,7 @@ struct Metropolis{P,R<:AbstractRNG,C<:Function, Ru<:AriannaRule} <: AriannaAlgor
         R::DataType=Xoshiro,
         parallel::Bool=false,
         rule::Ru=MetropolisRule()
-    ) where {S<:AriannaSystem,P, Ru<:AriannaRule}
+    ) where {S<:AriannaSystem,P,Ru<:AriannaRule}
         # Safety checks
         @assert length(chains) == length(pools)
         @assert all(k -> all(move -> move.parameters == getindex.(pools, k)[1].parameters, getindex.(pools, k)), eachindex(pools[1]))
@@ -333,7 +333,7 @@ struct Metropolis{P,R<:AbstractRNG,C<:Function, Ru<:AriannaRule} <: AriannaAlgor
         rngs = [R(s) for s in seeds]
         # Handle parallelism
         collecter = parallel ? Transducers.tcollect : collect
-        return new{P,R,typeof(collecter), Ru}(pools, sweepstep, seed, rngs, parallel, collecter, rule)
+        return new{P,R,typeof(collecter),Ru}(pools, sweepstep, seed, rngs, parallel, collecter, rule)
     end
 
 end
@@ -378,17 +378,6 @@ function make_step!(simulation::Simulation, algorithm::Metropolis)
     return nothing
 end
 
-"""
-    callback_acceptance(simulation)
-
-Calculate the mean acceptance rate of the Metropolis algorithm.
-
-# Arguments
-- `simulation`: Simulation to calculate the acceptance rate of
-"""
-function callback_acceptance(simulation)
-    return mean([[move.accepted_calls / move.total_calls for move in pool] for pool in getproperty.(filter(x -> isa(x, Metropolis), simulation.algorithms), :pools)...])
-end
 
 """
     write_parameters(::Policy, parameters)
@@ -456,7 +445,7 @@ struct StoreParameters{V<:AbstractArray} <: AriannaAlgorithm
 
     function StoreParameters(pool, path; ids=collect(eachindex(pool)), store_first::Bool=true, store_last::Bool=false)
         parameters_list = [move.parameters for move in pool[ids]]
-        dirs = joinpath.(path, "parameters", ["$(k)" for k in ids])
+        dirs = joinpath.(path, "moves", ["$(k)" for k in ids])
         mkpath.(dirs)
         paths = joinpath.(dirs, "parameters.dat")
         files = Vector{IOStream}(undef, length(paths))
@@ -515,6 +504,81 @@ end
 function finalise(algorithm::StoreParameters, simulation::Simulation)
     algorithm.store_last && make_step!(simulation, algorithm)
     simulation.verbose && println("Closing parameter files...")
+    close.(algorithm.files)
+    return nothing
+end
+
+
+"""
+    StoreAcceptance <: AriannaAlgorithm
+
+Algorithm to store the moving average acceptance rate of the simulation.
+"""
+struct StoreAcceptance <: AriannaAlgorithm
+    paths::Vector{String}
+    files::Vector{IOStream}
+    ids::Vector{Int}
+
+    function StoreAcceptance(path::String, ids::AbstractVector)
+        dirs = joinpath.(path, "moves", ["$(k)" for k in ids])
+        mkpath.(dirs)
+        paths = joinpath.(dirs, "acceptance.dat")
+        files = Vector{IOStream}(undef, length(paths))
+        try
+            files = open.(paths, "w")
+        finally
+            close.(files)
+        end
+        return new(paths, files, ids)
+    end
+end
+
+function StoreAcceptance(chains::AbstractVector; dependencies=missing, path=missing, ids=missing, extras...)
+    @assert length(dependencies) == 1
+    @assert isa(dependencies[1], Metropolis)
+    pool = dependencies[1].pools[1]
+    if ismissing(ids)
+        ids = collect(eachindex(pool))
+    end
+    return StoreAcceptance(path, ids)
+end
+
+function initialise(algorithm::StoreAcceptance, simulation::Simulation)
+    simulation.verbose && println("Opening acceptance files...")
+    algorithm.files .= open.(algorithm.paths, "w")
+    return nothing
+end
+
+function make_step!(simulation::Simulation, algorithm::StoreAcceptance)
+    metropolis_algos = filter(x -> isa(x, Metropolis), simulation.algorithms)
+    if isempty(metropolis_algos)
+        return
+    end
+
+    all_pools = []
+    for algo in metropolis_algos
+        append!(all_pools, algo.pools)
+    end
+
+    if isempty(all_pools)
+        return
+    end
+
+    pool_rates = [
+        [move.total_calls > 0 ? move.accepted_calls / move.total_calls : 0.0 for move in pool]
+        for pool in all_pools
+    ]
+
+    avg_rates = mean(pool_rates)
+
+    for (k, id) in enumerate(algorithm.ids)
+        println(algorithm.files[k], "$(simulation.t) $(avg_rates[id])")
+        flush(algorithm.files[k])
+    end
+end
+
+function finalise(algorithm::StoreAcceptance, simulation::Simulation)
+    simulation.verbose && println("Closing acceptance files...")
     close.(algorithm.files)
     return nothing
 end

@@ -20,7 +20,8 @@ potential(x) = x^2
         path = "data/MC/particle_1d/Harmonic/beta$β/M$M/seed$seed"
         algorithm_list = (
             (algorithm=Metropolis, pool=pool, seed=seed, parallel=false),
-            (algorithm=StoreCallbacks, callbacks=(callback_energy, callback_acceptance), scheduler=sampletimes),
+            (algorithm=StoreCallbacks, callbacks=(energy,), scheduler=sampletimes),
+            (algorithm=StoreAcceptance, dependencies=(Metropolis,), scheduler=sampletimes),
             (algorithm=StoreTrajectories, scheduler=sampletimes),
             (algorithm=StoreBackups, scheduler=build_schedule(steps, burn, steps ÷ 10), store_first=true, store_last=true),
             (algorithm=StoreLastFrames, scheduler=[steps]),
@@ -30,7 +31,7 @@ potential(x) = x^2
         run!(simulation)
         μ⁺ = 0.0
         σ⁺ = 1 / sqrt(2β)
-        trj_files = [joinpath(dir, "trajectory.dat") for dir in readdir(joinpath(path, "trajectories"), join=true)]
+        trj_files = [joinpath(dir, "trajectory.dat") for dir in readdir(joinpath(path, "chains"), join=true)]
         trajectories = map(file -> readdlm(file)[:, 2], trj_files)
         positions = vcat(trajectories...)
         @test isapprox(mean(positions), μ⁺, atol=1e-3)

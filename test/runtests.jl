@@ -1,5 +1,7 @@
 using SafeTestsets
 
+rm("data", recursive=true, force=true)
+
 @safetestset "Distribution Test" begin
     include("distribution_test.jl")
 end

@@ -95,7 +95,7 @@ struct PolicyGradientEstimator{P,O,VPL<:AbstractArray,VPR<:AbstractArray,VO<:Abs
         return new{P,O,typeof(policy_list),typeof(parameters_list),typeof(objectives),typeof(gradients_data),typeof(chains_shadow),typeof(∇logqs_forward),typeof(ad_backend),R,typeof(reducer)}(
             pools, optimisers, learn_ids, q_batch_size, policy_list, parameters_list, objectives, gradients_data,
             chains_shadow, ∇logqs_forward, ∇logqs_backward, ad_backend, seed, rngs, parallel, reducer
-            )
+        )
     end
 
 end
@@ -123,7 +123,7 @@ function make_step!(simulation::Simulation, algorithm::PolicyGradientEstimator)
                         ∇logq_backward=algorithm.∇logqs_backward[lid],
                         shadow=algorithm.chains_shadow[c],
                         ad_backend=algorithm.ad_backend
-                        )
+                    )
                 end)
             end) |> Cat()
         )
@@ -144,6 +144,90 @@ function write_algorithm(io, algorithm::PolicyGradientEstimator, scheduler)
     if algorithm.parallel
         println(io, "\t\tThreads: $(Threads.nthreads())")
     end
+end
+
+
+
+"""
+    StoreObjective{V<:AbstractArray} <: AriannaAlgorithm
+
+A struct representing an objective function store.
+
+# Fields
+- `paths::Vector{String}`: Vector of paths to the objective files
+- `files::Vector{IOStream}`: Vector of open file streams to the objective files
+- `objectives::V`: List of objectives to store
+- `store_first::Bool`: Flag to store the objectives at the first step
+- `store_last::Bool`: Flag to store the objectives at the last step
+
+# Type Parameters
+- `V`: Type of the objective array
+"""
+struct StoreObjective{V<:AbstractArray} <: AriannaAlgorithm
+    paths::Vector{String}
+    files::Vector{IOStream}
+    objectives::V
+    store_first::Bool
+    store_last::Bool
+
+    function StoreObjective(estimator::PolicyGradientEstimator, path; store_first::Bool=true, store_last::Bool=false)
+        objectives = estimator.objectives
+        ids = estimator.learn_ids
+        dirs = joinpath.(path, "moves", ["$(k)" for k in ids])
+        mkpath.(dirs)
+        paths = joinpath.(dirs, "objective.dat")
+        files = Vector{IOStream}(undef, length(paths))
+        try
+            files = open.(paths, "w")
+        finally
+            close.(files)
+        end
+        return new{typeof(objectives)}(paths, files, objectives, store_first, store_last)
+    end
+end
+
+"""
+    StoreObjective(chains; dependencies=missing, path=missing, store_first=true, store_last=false, extras...)
+
+Create a new StoreObjective instance.
+
+# Arguments
+- `chains`: Vector of chains (unused but kept for API consistency)
+- `dependencies`: Dependencies of the objective store (must contain PolicyGradientEstimator)
+- `path`: Path to the objective files
+- `store_first`: Flag to store the objectives at the first step
+- `store_last`: Flag to store the objectives at the last step
+- `extras`: Additional keyword arguments
+
+# Returns
+- `algorithm`: StoreObjective instance
+"""
+function StoreObjective(chains; dependencies=missing, path=missing, store_first=true, store_last=false, extras...)
+    @assert length(dependencies) == 1
+    @assert isa(dependencies[1], PolicyGradientEstimator)
+    estimator = dependencies[1]
+    return StoreObjective(estimator, path; store_first=store_first, store_last=store_last)
+end
+
+function initialise(algorithm::StoreObjective, simulation::Simulation)
+    simulation.verbose && println("Opening objective files...")
+    algorithm.files .= open.(algorithm.paths, "w")
+    algorithm.store_first && make_step!(simulation, algorithm)
+    return nothing
+end
+
+function make_step!(simulation::Simulation, algorithm::StoreObjective)
+    for k in eachindex(algorithm.files)
+        println(algorithm.files[k], "$(simulation.t) $(algorithm.objectives[k])")
+        flush(algorithm.files[k])
+    end
+end
+
+function finalise(algorithm::StoreObjective, simulation::Simulation)
+    algorithm.store_last && make_step!(simulation, algorithm)
+    simulation.verbose && println("Closing objective files...")
+    close.(algorithm.files)
+    return nothing
 end
 
 nothing

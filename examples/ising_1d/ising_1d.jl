@@ -31,10 +31,10 @@ end
 function compute_energy_spin(system::Ising1D, i::Int)
     # Compute the energy contribution of the spin at index i
     N = length(system.spin)
-    left = system.spin[mod1(i-1, N)]  # Previous spin (wraps around)
-    right = system.spin[mod1(i+1, N)]  # Next spin (wraps around)
-    interaction = - system.j * (left + right) * system.spin[i]
-    externamagnetic = - system.h * system.spin[i]
+    left = system.spin[mod1(i - 1, N)]  # Previous spin (wraps around)
+    right = system.spin[mod1(i + 1, N)]  # Next spin (wraps around)
+    interaction = -system.j * (left + right) * system.spin[i]
+    externamagnetic = -system.h * system.spin[i]
     return interaction + externamagnetic
 end
 
@@ -113,8 +113,8 @@ function Arianna.store_trajectory(io, system::Ising1D, t::Int, ::DAT)
     return nothing
 end
 
-function callback_energy(simulation)
-    return mean(system.e for system in simulation.chains)
+Arianna.@callback function energy(system)
+    return system.e
 end
 
 ###############################################################################
