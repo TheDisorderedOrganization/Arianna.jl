@@ -1,7 +1,7 @@
 name = "Arianna"
 uuid = "07692032-97b4-4f8d-80d7-e18df88d31a9"
 authors = ["Leonardo Galliano <leonardo.galliano@espci.fr>", "Romain Simon <romain.simon@umontpellier.fr>"]
-version = "0.1.5"
+version = "0.2.0"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
