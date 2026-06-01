@@ -26,7 +26,7 @@ Base.length(::AriannaSystem) = 1 # Default length for systems
 export AriannaSystem
 
 include("simulation.jl")
-export Simulation, build_schedule, run!
+export Simulation, build_schedule, MultiOrigins, run!
 
 include("algorithms.jl")
 export AriannaAlgorithm, StoreCallbacks, StoreTrajectories, StoreLastFrames, StoreBackups, PrintTimeSteps
