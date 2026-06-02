@@ -116,6 +116,44 @@ function build_schedule(steps::Int, burn::Int, block::Vector{Int})
     return filter(x -> x ≤ steps, unique(vcat(blocks..., [steps])))
 end
 
+"""
+    build_schedule(steps::Int, tw::Int, N::Int; burn::Int=0)
+
+Create a vector of timestep from `burn` to `steps` with a log spaced scheme repeated every tw.
+"""
+
+struct MultiOrigins
+    tw::Int # decorrelation time
+    N::Int # number of point from burn to steps
+end
+
+function build_schedule(steps::Int, params::MultiOrigins; burn::Int=0)
+    tw = params.tw
+    N = params.N
+
+    @assert 0 <= burn < steps "burn=$burn must be >= 0 and < steps=$steps"
+
+    tau_targets = unique([round(Int, exp(i * log(steps) / (N-1))) for i in 0:N-1])
+    tau_targets[end] = steps
+
+    ntw     = round(Int, (steps-burn) / tw)
+    origins = [burn + k * tw for k in 0:ntw]
+
+    sched_set = Set{Int}()
+    for tw_i in origins
+        push!(sched_set, tw_i)
+        for tau_j in tau_targets
+            dum = tw_i + tau_j
+            if dum <= steps
+                push!(sched_set, dum)
+            end
+        end
+    end
+
+    sched = filter(x -> (x >= burn) && (x <= steps), collect(sched_set))
+    return sort!(sched)
+end
+
 function write_system(io, system::AriannaSystem)
     println(io, "\t" * "$(typeof(system))")
     return nothing
