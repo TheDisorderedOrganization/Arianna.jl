@@ -131,16 +131,18 @@ function build_schedule(steps::Int, params::MultiOrigins; burn::Int=0)
     tw = params.tw
     N = params.N
 
-    tau_cibles = unique([round(Int, exp(i * log(steps) / (N-1))) for i in 0:N-1])
-    tau_cibles[end] = steps
+    @assert 0 <= burn < steps "burn=$burn must be >= 0 and < steps=$steps"
 
-    ntw     = round(Int, steps / tw)
-    origins = [k * tw for k in 0:ntw]
+    tau_targets = unique([round(Int, exp(i * log(steps) / (N-1))) for i in 0:N-1])
+    tau_targets[end] = steps
+
+    ntw     = round(Int, (steps-burn) / tw)
+    origins = [burn + k * tw for k in 0:ntw]
 
     sched_set = Set{Int}()
     for tw_i in origins
         push!(sched_set, tw_i)
-        for tau_j in tau_cibles
+        for tau_j in tau_targets
             dum = tw_i + tau_j
             if dum <= steps
                 push!(sched_set, dum)
