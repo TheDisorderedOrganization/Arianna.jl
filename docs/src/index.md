@@ -29,15 +29,15 @@ Arianna is a flexible and extensible framework for Monte Carlo simulations. Inst
 You can install Arianna using the Julia package manager in one of two ways:
 
 1. Using the package mode (press `]` in the Julia REPL):
-```julia
-add Arianna
-```
+   ```julia
+   add Arianna
+   ```
 
 2. Using the Pkg API:
-```julia
-using Pkg
-Pkg.add("Arianna")
-```
+   ```julia
+   using Pkg
+   Pkg.add("Arianna")
+   ```
 
 ## Usage
 
