@@ -50,7 +50,7 @@ mutable struct Simulation{S,A,VS}
         @assert all(scheduler -> all(x -> 0 ≤ x ≤ steps, scheduler), schedulers)
         @assert all(scheduler -> issorted(scheduler), schedulers)
         t = t_start # initial time for the simulation 0 by default
-        counters = [findfirst(x -> x > t_start, scheduler) for scheduler in schedulers]
+        counters = [something(findfirst(x -> x > t_start, scheduler),1) for scheduler in schedulers]
         mkpath(path)
         return new{S,A,VS}(chains, algorithms, steps, t, t_start, schedulers, counters, path, verbose)
     end
@@ -165,7 +165,7 @@ function write_system(io, system::AriannaSystem)
 end
 
 function write_summary(simulation)
-    writing_mode = simulation.t_start > 0 ? "a" : "w" # idiomatic code for if t_start > 0 "a" else "w"
+    writing_mode = simulation.t_start > 0 ? "a" : "w"
     open(joinpath(simulation.path, "summary.log"), writing_mode) do file
         println(file, "SIMULATION SUMMARY")
         println(file)
@@ -220,7 +220,7 @@ Run the Monte Carlo simulation.
 """
 function run!(simulation::Simulation; wall_time::Real=Inf)
     t0 = time()         # initial measure of time in seconds
-    status = :completed # default 
+    status = :running # default 
     try
         simulation.verbose && println("\n" * "-"^50)
         simulation.verbose && println("\033[1;32mINITIALISATION\033[0m")
@@ -231,12 +231,11 @@ function run!(simulation::Simulation; wall_time::Real=Inf)
         simulation.verbose && println("\033[1;32m\nRUNNING SIMULATION...\033[0m")
         sim_time = @elapsed for simulation.t in (simulation.t_start+1):simulation.steps
             for k in eachindex(simulation.algorithms)
-                # Guard against a scheduler that ends before `steps`: once its counter
-                # runs past the last entry, `schedulers[k][counters[k]]` would be out of
-                # bounds. `&&` short-circuits, so we only index when the counter is valid.
-                if simulation.counters[k] ≤ length(simulation.schedulers[k]) && simulation.t == simulation.schedulers[k][simulation.counters[k]]
+                if simulation.t == simulation.schedulers[k][simulation.counters[k]]
                     make_step!(simulation, simulation.algorithms[k])
-                    simulation.counters[k] += 1
+                    if simulation.counters[k] < length(simulation.schedulers[k]) # pin the counter at the last entry to prevent out of bound situations
+                        simulation.counters[k] += 1
+                    end
                 end
             end
             if time()-t0 ≥ wall_time
@@ -244,7 +243,10 @@ function run!(simulation::Simulation; wall_time::Real=Inf)
                 break # exit the `for simulation.t` loop
             end
         end
-        simulation.verbose && println("\nSimulation completed in $(sim_time) s")
+        if status == :running
+            status = :completed
+        end
+        simulation.verbose && println("\nSimulation $(status == :completed ? "completed" : "stopped for restart") in $(sim_time) s")
         update_summary(simulation, sim_time)
     finally
         simulation.verbose && println("\033[1;32m\nFINALISATION\033[0m")
