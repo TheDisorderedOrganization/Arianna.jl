@@ -524,11 +524,6 @@ struct StoreAcceptance <: AriannaAlgorithm
         mkpath.(dirs)
         paths = joinpath.(dirs, "acceptance.dat")
         files = Vector{IOStream}(undef, length(paths))
-        try
-            files = open.(paths, "w")
-        finally
-            close.(files)
-        end
         return new(paths, files, ids)
     end
 end
@@ -545,7 +540,8 @@ end
 
 function initialise(algorithm::StoreAcceptance, simulation::Simulation)
     simulation.verbose && println("Opening acceptance files...")
-    algorithm.files .= open.(algorithm.paths, "w")
+    writing_mode = simulation.t_start > 0 ? "a" : "w"
+    algorithm.files .= open.(algorithm.paths, writing_mode)
     return nothing
 end
 

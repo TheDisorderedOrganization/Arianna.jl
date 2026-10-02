@@ -8,6 +8,7 @@ A structure representing a Monte Carlo simulation.
 - `algorithms::A`: List of algorithms.
 - `steps::Int`: Number of MC sweeps.
 - `t::Int`: Current time step.
+- `t_start::Int`: time step to start the simulation from.
 - `schedulers::VS`: List of schedulers (one for each algorithm).
 - `counters::Vector{Int}`: Counters for the schedulers (one for each algorithm).
 - `path::String`: Simulation path.
@@ -18,6 +19,7 @@ mutable struct Simulation{S,A,VS}
     algorithms::A
     steps::Int
     t::Int
+    t_start::Int
     schedulers::VS
     counters::Vector{Int}
     path::String
@@ -31,6 +33,7 @@ mutable struct Simulation{S,A,VS}
     - `algorithms::A`: List of algorithms.
     - `schedulers::VS`: List of schedulers (one for each algorithm).
     - `steps::Int`: Number of MC sweeps.
+    - `t_start::Int=0`: starting time of the simulation
     - `path::String="data"`: Simulation path.
     - `verbose::Bool=false`: Flag for verbose output.
     """
@@ -39,22 +42,23 @@ mutable struct Simulation{S,A,VS}
         algorithms::A,
         schedulers::VS,
         steps::Int;
+        t_start::Int=0,
         path::String="data",
         verbose::Bool=false
     ) where {S<:AriannaSystem,A,VS}
         @assert length(schedulers) == length(algorithms)
         @assert all(scheduler -> all(x -> 0 ≤ x ≤ steps, scheduler), schedulers)
         @assert all(scheduler -> issorted(scheduler), schedulers)
-        t = 0
-        counters = [findfirst(x -> x > 0, scheduler) for scheduler in schedulers]
+        t = t_start # initial time for the simulation 0 by default
+        counters = [something(findfirst(x -> x > t_start, scheduler),1) for scheduler in schedulers]
         mkpath(path)
-        return new{S,A,VS}(chains, algorithms, steps, t, schedulers, counters, path, verbose)
+        return new{S,A,VS}(chains, algorithms, steps, t, t_start, schedulers, counters, path, verbose)
     end
 
 end
 
 """
-    Simulation(chains, algorithm_list, steps; path="data", verbose=false)
+    Simulation(chains, algorithm_list, steps; t_start=0 path="data", verbose=false)
 
 Create a new `Simulation` instance from a list of algorithm constructors.
 
@@ -62,10 +66,11 @@ Create a new `Simulation` instance from a list of algorithm constructors.
 - `chains`: Vector of independent Arianna systems.
 - `algorithm_list`: List of algorithm constructors.
 - `steps`: Number of MC sweeps.
+- `t_start=0`: initial time for the simulation.
 - `path="data"`: Simulation path.
 - `verbose=false`: Flag for verbose output.
 """
-function Simulation(chains, algorithm_list, steps; path="data", verbose=false)
+function Simulation(chains, algorithm_list, steps; t_start=0, path="data", verbose=false)
     schedulers_tmp = []
     algorithms_tmp = []
     algorithm_names = []
@@ -84,7 +89,7 @@ function Simulation(chains, algorithm_list, steps; path="data", verbose=false)
     end
     schedulers = ntuple(k -> schedulers_tmp[k], length(schedulers_tmp))
     algorithms = ntuple(k -> algorithms_tmp[k], length(algorithms_tmp))
-    return Simulation(chains, algorithms, schedulers, steps; path=path, verbose=verbose)
+    return Simulation(chains, algorithms, schedulers, steps; t_start=t_start, path=path, verbose=verbose)
 end
 
 """
@@ -160,11 +165,13 @@ function write_system(io, system::AriannaSystem)
 end
 
 function write_summary(simulation)
-    open(joinpath(simulation.path, "summary.log"), "w") do file
+    writing_mode = simulation.t_start > 0 ? "a" : "w"
+    open(joinpath(simulation.path, "summary.log"), writing_mode) do file
         println(file, "SIMULATION SUMMARY")
         println(file)
         println(file, "Simulation:")
         println(file, "\tSteps: $(simulation.steps)")
+        println(file, "\tInitial time: $(simulation.t_start)")
         println(file, "\tNumber of chains: $(length(simulation.chains))")
         println(file, "\tNumber of algorithms: $(length(simulation.algorithms))")
         println(file, "\tVerbose: $(simulation.verbose)")
@@ -203,14 +210,17 @@ function finalise_summary(simulation)
 end
 
 """
-    run!(simulation::Simulation)
+    run!(simulation::Simulation; wall_time::Real=Inf)
 
 Run the Monte Carlo simulation.
 
 # Arguments
 - `simulation::Simulation`: The simulation instance to run.
+- `wall_time::Real=Inf`: to set a wall_time (in seconds) that trigger a restart by default wall_time is Inf
 """
-function run!(simulation::Simulation)
+function run!(simulation::Simulation; wall_time::Real=Inf)
+    t0 = time()         # initial measure of time in seconds
+    status = :running # default 
     try
         simulation.verbose && println("\n" * "-"^50)
         simulation.verbose && println("\033[1;32mINITIALISATION\033[0m")
@@ -219,15 +229,24 @@ function run!(simulation::Simulation)
         end
         write_summary(simulation)
         simulation.verbose && println("\033[1;32m\nRUNNING SIMULATION...\033[0m")
-        sim_time = @elapsed for simulation.t in 1:simulation.steps
+        sim_time = @elapsed for simulation.t in (simulation.t_start+1):simulation.steps
             for k in eachindex(simulation.algorithms)
                 if simulation.t == simulation.schedulers[k][simulation.counters[k]]
                     make_step!(simulation, simulation.algorithms[k])
-                    simulation.counters[k] += 1
+                    if simulation.counters[k] < length(simulation.schedulers[k]) # pin the counter at the last entry to prevent out of bound situations
+                        simulation.counters[k] += 1
+                    end
                 end
             end
+            if time()-t0 ≥ wall_time
+                status = :need_restart # switch to need_restart if wall_time is hit by the simulation
+                break # exit the `for simulation.t` loop
+            end
         end
-        simulation.verbose && println("\nSimulation completed in $(sim_time) s")
+        if status == :running
+            status = :completed
+        end
+        simulation.verbose && println("\nSimulation $(status == :completed ? "completed" : "stopped for restart") in $(sim_time) s")
         update_summary(simulation, sim_time)
     finally
         simulation.verbose && println("\033[1;32m\nFINALISATION\033[0m")
@@ -238,7 +257,7 @@ function run!(simulation::Simulation)
         simulation.verbose && println("\033[1;32m\nDONE\033[0m")
         simulation.verbose && println("-"^50 * "\n")
     end
-    return nothing
+    return status
 end
 
 nothing
