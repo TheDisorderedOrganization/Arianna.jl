@@ -220,7 +220,7 @@ Run the Monte Carlo simulation.
 """
 function run!(simulation::Simulation; wall_time::Real=Inf)
     t0 = time()         # initial measure of time in seconds
-    status = :running # default 
+    status = :running   # default 
     try
         simulation.verbose && println("\n" * "-"^50)
         simulation.verbose && println("\033[1;32mINITIALISATION\033[0m")
@@ -248,6 +248,12 @@ function run!(simulation::Simulation; wall_time::Real=Inf)
         end
         simulation.verbose && println("\nSimulation $(status == :completed ? "completed" : "stopped for restart") in $(sim_time) s")
         update_summary(simulation, sim_time)
+    
+    catch err
+        status = :failed
+        simulation.verbose && println("\033[1;31m\nSIMULATION FAILED:\033[0m $(sprint(showerror, err))")
+        rethrow() 
+    
     finally
         simulation.verbose && println("\033[1;32m\nFINALISATION\033[0m")
         for algorithm in simulation.algorithms
