@@ -121,17 +121,16 @@ function build_schedule(steps::Int, burn::Int, block::Vector{Int})
     return filter(x -> x ≤ steps, unique(vcat(blocks..., [steps])))
 end
 
-"""
-    build_schedule(steps::Int, tw::Int, N::Int; burn::Int=0)
-
-Create a vector of timestep from `burn` to `steps` with a log spaced scheme repeated every tw.
-"""
-
 struct MultiOrigins
     tw::Int # decorrelation time
     N::Int # number of point from burn to steps
 end
 
+"""
+    build_schedule(steps::Int, tw::Int, N::Int; burn::Int=0)
+
+Create a vector of timestep from `burn` to `steps` with a log spaced scheme repeated every tw.
+"""
 function build_schedule(steps::Int, params::MultiOrigins; burn::Int=0)
     tw = params.tw
     N = params.N
