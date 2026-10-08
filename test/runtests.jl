@@ -14,6 +14,10 @@ end
     include("ad_backends_test.jl")
 end
 
+@safetestset "Restart Test" begin
+    include("restart_test.jl")
+end
+
 @safetestset "Quality Assurance" begin
     using Aqua
     using Arianna

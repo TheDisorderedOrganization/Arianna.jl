@@ -106,11 +106,6 @@ struct StoreCallbacks{V} <: AriannaAlgorithm
         for c in eachindex(chains)
             paths[c] = joinpath.(dirs[c], cb_names)
             files[c] = Vector{IOStream}(undef, length(callbacks))
-            try
-                files[c] = open.(paths[c], "w")
-            catch e
-                rethrow(e)
-            end
         end
 
         return new{V}(callbacks, paths, files, store_first, store_last)
@@ -129,9 +124,10 @@ function initialise(algorithm::StoreCallbacks, simulation::Simulation)
     simulation.verbose && println("Opening callback files...")
 
     for c in eachindex(algorithm.files)
-        algorithm.files[c] .= open.(algorithm.paths[c], "w")
+        writing_mode = simulation.t_start > 0 ? "a" : "w"
+        algorithm.files[c] .= open.(algorithm.paths[c], writing_mode)
     end
-    algorithm.store_first && make_step!(simulation, algorithm)
+    (algorithm.store_first && simulation.t_start == 0) && make_step!(simulation, algorithm)
     return nothing
 end
 
@@ -210,11 +206,6 @@ struct StoreTrajectories{F<:Format} <: AriannaAlgorithm
         ext = fmt.extension
         paths = joinpath.(dirs, "trajectory$(ext)")
         files = Vector{IOStream}(undef, length(paths))
-        try
-            files = open.(paths, "w")
-        finally
-            close.(files)
-        end
         return new{typeof(fmt)}(paths, files, fmt, store_first, store_last)
     end
 
@@ -236,8 +227,9 @@ end
 
 function initialise(algorithm::StoreTrajectories, simulation::Simulation)
     simulation.verbose && println("Opening trajectory files...")
-    algorithm.files .= open.(algorithm.paths, "w")
-    algorithm.store_first && make_step!(simulation, algorithm)
+    writing_mode = simulation.t_start > 0 ? "a" : "w"
+    algorithm.files .= open.(algorithm.paths, writing_mode)
+    (algorithm.store_first && simulation.t_start == 0) && make_step!(simulation, algorithm)
     return nothing
 end
 
